@@ -14,17 +14,29 @@ npm run dev
 
 Open http://localhost:3000.
 
-## Supabase setup (optional, recommended)
-1. Create a Supabase project at https://supabase.com, then go to Settings → API to find:
-   - Project URL
-   - anon public key
-2. Copy `.env.local.example` to `.env.local` and set:
-```
+## Supabase setup (required for multi-household features)
+
+### 1. Create Supabase project
+1. Go to https://supabase.com and create a new project
+2. Settings → API: copy **Project URL** and **anon public key**
+3. Copy `.env.local.example` to `.env.local` and set:
+```bash
 VITE_SUPABASE_URL=your-project-url
 VITE_SUPABASE_ANON_KEY=your-anon-key
 VITE_SITE_URL=https://your-app.vercel.app   # optional but recommended for password reset links
 ```
-3. Restart the dev server so env vars are picked up.
+
+### 2. Initialize database
+1. Open **SQL Editor** in your Supabase project
+2. Copy the contents of `supabase-schema.sql`
+3. Run the script to create tables, RLS policies, and functions
+
+See [DATABASE_SETUP.md](./DATABASE_SETUP.md) for detailed instructions.
+
+### 3. Restart dev server
+```bash
+npm run dev
+```
 
 ### What changes when configured?
 - Login form uses `supabase.auth.signInWithPassword(email, password)`
@@ -33,11 +45,22 @@ VITE_SITE_URL=https://your-app.vercel.app   # optional but recommended for passw
 
 If env vars are not set, the app falls back to a mock login (localStorage only).
 
-## Structure
-- `src/App.tsx` — routing + auth guarding
-- `src/pages/LoginPage.tsx` — login form (Supabase or mock)
-- `src/pages/Dashboard.tsx` — header + cards, logout
+## Features
+
+### Multi-Household System
+- **Create household:** After signup, create a new household and become admin
+- **Join household:** Enter an 8-digit invite code from an admin
+- **Invite codes:** Admins can view and share unique codes in the dashboard
+- **Automatic assignment:** Once joined, users always see their household on login
+
+### Structure
+- `src/App.tsx` — routing + auth guarding + household provider
+- `src/pages/LoginPage.tsx` — login + signup form (Supabase or mock)
+- `src/pages/OnboardingPage.tsx` — household creation/joining after signup
+- `src/pages/Dashboard.tsx` — household overview, invite code (admin), logout
+- `src/context/HouseholdContext.tsx` — household state management
 - `src/lib/supabaseClient.ts` — Supabase client initialization
+- `supabase-schema.sql` — database schema (households, profiles, members)
 
 ## Build
 ```bash

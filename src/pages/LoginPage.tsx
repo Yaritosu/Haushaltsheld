@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { SUPABASE_CONFIGURED, supabase } from '../lib/supabaseClient'
+import { SUPABASE_CONFIGURED, supabase, SITE_URL } from '../lib/supabaseClient'
 
 type Props = { onAuthSuccess?: () => void }
 
@@ -10,6 +10,7 @@ export default function LoginPage({ onAuthSuccess }: Props) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [info, setInfo] = useState('')
+  const [pendingEmail, setPendingEmail] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -22,11 +23,13 @@ export default function LoginPage({ onAuthSuccess }: Props) {
           const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
           if (signInError) throw signInError
         } else {
-          const { data, error: signUpError } = await supabase.auth.signUp({ email, password })
+          const redirectTo = (SITE_URL || window.location.origin) + '/login'
+          const { data, error: signUpError } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: redirectTo } })
           if (signUpError) throw signUpError
           // Wenn Email-Bestätigung aktiv ist, gibt es keine Session.
           if (!data.session) {
             setInfo('Registrierung erfolgreich. Bitte bestätige deine E‑Mail und melde dich danach an.')
+            setPendingEmail(email)
             return
           }
         }
@@ -49,6 +52,17 @@ export default function LoginPage({ onAuthSuccess }: Props) {
     }
   }
 
+  const resendConfirmation = async () => {
+    if (!pendingEmail || !SUPABASE_CONFIGURED || !supabase) return
+    setError(''); setInfo('')
+    try {
+      await supabase.auth.resend({ type: 'signup', email: pendingEmail, options: { emailRedirectTo: (SITE_URL || window.location.origin) + '/login' } })
+      setInfo('Bestätigungs‑E‑Mail wurde erneut gesendet.')
+    } catch (err: any) {
+      setError(err?.message || 'Konnte Bestätigungs‑E‑Mail nicht senden')
+    }
+  }
+
   return (
     <div className="app-root login-page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div className="card" style={{ maxWidth: 420, width: '100%' }}>
@@ -58,7 +72,18 @@ export default function LoginPage({ onAuthSuccess }: Props) {
           <input type="email" placeholder="E-Mail Adresse" value={email} onChange={(e) => setEmail(e.target.value)} required />
           <input type="password" placeholder="Passwort" value={password} onChange={(e) => setPassword(e.target.value)} required />
           {error && <div className="form-error">{error}</div>}
-          {!error && info && <div style={{ textAlign: 'center', marginBottom: 8 }}>{info}</div>}
+          {!error && info && (
+            <div style={{ textAlign: 'center', marginBottom: 8 }}>
+              {info}
+              {isLogin === false && pendingEmail && (
+                <div style={{ marginTop: 8 }}>
+                  <button type="button" onClick={resendConfirmation}>
+                    Bestätigungs‑E‑Mail erneut senden
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
           <button className="primary" type="submit" disabled={loading}>{loading ? 'Lade…' : (isLogin ? 'Anmelden' : 'Registrieren')}</button>
         </form>
         <div style={{ textAlign: 'center', marginTop: 12 }}>
