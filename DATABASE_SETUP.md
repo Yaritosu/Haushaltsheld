@@ -17,6 +17,7 @@ Das erstellt:
   - `generate_invite_code()` – Generiert eindeutige 8-stellige Codes
   - `create_household_with_admin()` – Erstellt Haushalt und macht User zum Admin
   - `join_household_by_code()` – User tritt via Code einem Haushalt bei
+  - `get_my_household()` – Liefert Haushalt + Rolle des aktuellen Users in einem Call
 
 ## Schritt 2: Testen
 
@@ -66,12 +67,37 @@ Nach dem Ausführen des SQL-Skripts kannst du:
 
 - **UNIQUE(household_id, user_id)** – Ein User kann nur einmal pro Haushalt sein
 
+Optional (empfohlen): Einzigartigkeit pro Benutzer über alle Haushalte:
+- **UNIQUE(user_id)** – Ein User kann nur in genau einem Haushalt sein
+
 ## Row Level Security (RLS)
 
 Alle Tabellen haben RLS aktiviert. Das bedeutet:
 - Users sehen nur Daten ihres eigenen Haushalts
 - Admins können Einladungscodes sehen und Members verwalten
 - Normale Members können andere Members sehen, aber nicht entfernen
+
+### Wichtig: Nicht-rekursive SELECT-Policy auf `household_members`
+Um Situationen direkt nach dem Beitritt/Erstellen zu vermeiden, in denen wegen RLS noch keine Daten sichtbar sind, ersetzen wir eine evtl. vorhandene rekursive Policy durch eine einfache Selbst-Policy:
+
+1) Öffne Supabase → SQL Editor → New Query
+2) Führe `scripts/sql/01_rls_household_members_select_replace.sql` aus
+  - Diese löscht ggf. eine alte Policy namens „Members can view household members” und legt „Users can view own memberships” an
+
+### RPC `get_my_household()` erstellen/aktualisieren
+Das Frontend lädt Haushalt + Rolle des aktuellen Users in einem Aufruf (robuster unter RLS):
+
+1) Öffne Supabase → SQL Editor → New Query
+2) Führe `scripts/sql/02_function_get_my_household.sql` aus
+
+### (Optional) Eindeutigkeit: „ein User, ein Haushalt“ erzwingen
+Wenn du möchtest, dass jeder User genau einem Haushalt angehört:
+
+1) Versuche die Constraint anzulegen:
+  - Führe `scripts/sql/03_unique_user_single_household.sql` aus
+2) Falls ein Fehler wegen doppelter Einträge auftritt:
+  - Führe `scripts/sql/99_dedupe_household_members_by_user.sql` aus (behält den neuesten Eintrag pro User)
+  - Führe danach erneut `scripts/sql/03_unique_user_single_household.sql` aus
 
 ## Nächste Schritte
 
