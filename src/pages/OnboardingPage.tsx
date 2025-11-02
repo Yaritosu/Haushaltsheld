@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase, SUPABASE_CONFIGURED } from '../lib/supabaseClient'
 import { useNavigate } from 'react-router-dom'
+import { useHousehold } from '../context/HouseholdContext'
 
 export default function OnboardingPage() {
   const [mode, setMode] = useState<'choose' | 'create' | 'join'>('choose')
@@ -9,6 +10,7 @@ export default function OnboardingPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const navigate = useNavigate()
+  const { refetch } = useHousehold()
 
   const createHousehold = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -32,6 +34,8 @@ export default function OnboardingPage() {
 
       if (rpcError) throw rpcError
 
+      // Reload household context before navigating
+      await refetch()
       navigate('/dashboard')
     } catch (err: any) {
       setError(err.message || 'Fehler beim Erstellen des Haushalts')
@@ -70,6 +74,8 @@ export default function OnboardingPage() {
         throw rpcError
       }
 
+      // Reload household context before navigating
+      await refetch()
       navigate('/dashboard')
     } catch (err: any) {
       setError(err.message || 'Fehler beim Beitreten')

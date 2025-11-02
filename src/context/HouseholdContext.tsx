@@ -38,7 +38,20 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
         return
       }
 
-      // Fetch user's household membership
+      // Try to get household in one RPC call (more robust under RLS)
+      const { data: rpcData, error: rpcError } = await supabase.rpc('get_my_household')
+
+      if (!rpcError && rpcData) {
+        if (rpcData.length > 0) {
+          const row = rpcData[0]
+          setHousehold({ id: row.household_id, name: row.household_name, invite_code: row.invite_code, created_at: '', created_by: null })
+          setMembership({ id: 'unknown', household_id: row.household_id, user_id: user.id, role: row.role, joined_at: '' })
+          setLoading(false)
+          return
+        }
+      }
+
+      // Fallback: separate selects
       const { data: memberData, error: memberError } = await supabase
         .from('household_members')
         .select('*')
@@ -54,7 +67,6 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
 
       setMembership(memberData)
 
-      // Fetch household details
       const { data: householdData, error: householdError } = await supabase
         .from('households')
         .select('*')

@@ -75,14 +75,23 @@ CREATE POLICY "Anyone can create household"
   ON households FOR INSERT
   WITH CHECK (true);
 
--- Household members: members can view members of their household
-CREATE POLICY "Members can view household members"
+-- Household members: users can view their own membership rows
+-- Note: Using user_id = auth.uid() avoids recursive RLS lookups on the same table
+-- which can otherwise result in empty results directly after join/insert.
+DO $$ BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = current_schema()
+      AND tablename = 'household_members'
+      AND policyname = 'Members can view household members'
+  ) THEN
+    EXECUTE 'DROP POLICY "Members can view household members" ON household_members';
+  END IF;
+END $$;
+
+CREATE POLICY "Users can view own memberships"
   ON household_members FOR SELECT
-  USING (
-    household_id IN (
-      SELECT household_id FROM household_members WHERE user_id = auth.uid()
-    )
-  );
+  USING (user_id = auth.uid());
 
 CREATE POLICY "Admins can manage household members"
   ON household_members FOR ALL
@@ -96,6 +105,18 @@ CREATE POLICY "Admins can manage household members"
 CREATE POLICY "Users can join household"
   ON household_members FOR INSERT
   WITH CHECK (user_id = auth.uid());
+
+-- Optional: Ensure a user can belong to only ONE household at a time
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'unique_user_single_household'
+      AND conrelid = 'household_members'::regclass
+  ) THEN
+    ALTER TABLE household_members
+      ADD CONSTRAINT unique_user_single_household UNIQUE (user_id);
+  END IF;
+END $$;
 
 -- Function: Generate unique invite code
 CREATE OR REPLACE FUNCTION generate_invite_code()
@@ -148,6 +169,24 @@ BEGIN
   VALUES (new_household_id, user_id, 'admin');
   
   RETURN new_household_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function: Get current user's household (single call)
+CREATE OR REPLACE FUNCTION get_my_household()
+RETURNS TABLE (
+  household_id UUID,
+  household_name TEXT,
+  invite_code TEXT,
+  role TEXT
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT h.id, h.name, h.invite_code, m.role
+  FROM household_members m
+  JOIN households h ON h.id = m.household_id
+  WHERE m.user_id = auth.uid()
+  LIMIT 1;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
