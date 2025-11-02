@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import LoginPage from './pages/LoginPage'
 import Dashboard from './pages/Dashboard'
 import { SUPABASE_CONFIGURED, supabase } from './lib/supabaseClient'
+import ResetPassword from './pages/ResetPassword'
 
 // Very simple mock auth using localStorage
 const AUTH_KEY = 'hh_auth'
@@ -58,6 +59,7 @@ export default function App() {
         element={isAuthed ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />}
       />
       <Route path="/login" element={isAuthed ? <Navigate to="/dashboard" replace /> : <LoginPage onAuthSuccess={handleLogin} />} />
+  <Route path="/reset" element={<ResetPassword />} />
       <Route path="/dashboard" element={isAuthed ? <Dashboard onLogout={handleLogout} /> : <Navigate to="/login" replace />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

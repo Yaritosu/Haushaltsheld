@@ -4,26 +4,46 @@ import { SUPABASE_CONFIGURED, supabase } from '../lib/supabaseClient'
 type Props = { onAuthSuccess?: () => void }
 
 export default function LoginPage({ onAuthSuccess }: Props) {
+  const [isLogin, setIsLogin] = useState(true)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [info, setInfo] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setInfo('')
     setLoading(true)
     try {
       if (SUPABASE_CONFIGURED && supabase) {
-        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
-        if (signInError) throw signInError
+        if (isLogin) {
+          const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+          if (signInError) throw signInError
+        } else {
+          const { data, error: signUpError } = await supabase.auth.signUp({ email, password })
+          if (signUpError) throw signUpError
+          // Wenn Email-Bestätigung aktiv ist, gibt es keine Session.
+          if (!data.session) {
+            setInfo('Registrierung erfolgreich. Bitte bestätige deine E‑Mail und melde dich danach an.')
+            return
+          }
+        }
       } else {
-        // mock login success
+        // mock flow
         await new Promise((r) => setTimeout(r, 400))
       }
       onAuthSuccess?.()
     } catch (err: any) {
-      setError(err.message ?? 'Fehler beim Login')
+      const msg = String(err?.message || '')
+      if (/invalid login credentials/i.test(msg)) {
+        setError('Anmeldung fehlgeschlagen: Ungültige Zugangsdaten oder E‑Mail noch nicht bestätigt.')
+      } else if (/email not confirmed/i.test(msg)) {
+        setError('Bitte bestätige zuerst deine E‑Mail (prüfe dein Postfach).')
+      } else {
+        setError(msg || 'Fehler beim Login')
+      }
     } finally {
       setLoading(false)
     }
@@ -33,13 +53,24 @@ export default function LoginPage({ onAuthSuccess }: Props) {
     <div className="app-root login-page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div className="card" style={{ maxWidth: 420, width: '100%' }}>
         <h2 style={{ textAlign: 'center' }}>Haushaltsheld</h2>
-        <p className="muted" style={{ textAlign: 'center' }}>Melde dich an</p>
+        <p className="muted" style={{ textAlign: 'center' }}>{isLogin ? 'Melde dich an' : 'Erstelle einen Account'}</p>
         <form className="form" onSubmit={handleSubmit}>
           <input type="email" placeholder="E-Mail Adresse" value={email} onChange={(e) => setEmail(e.target.value)} required />
           <input type="password" placeholder="Passwort" value={password} onChange={(e) => setPassword(e.target.value)} required />
           {error && <div className="form-error">{error}</div>}
-          <button className="primary" type="submit" disabled={loading}>{loading ? 'Lade…' : 'Anmelden'}</button>
+          {!error && info && <div style={{ textAlign: 'center', marginBottom: 8 }}>{info}</div>}
+          <button className="primary" type="submit" disabled={loading}>{loading ? 'Lade…' : (isLogin ? 'Anmelden' : 'Registrieren')}</button>
         </form>
+        <div style={{ textAlign: 'center', marginTop: 12 }}>
+          <button type="button" onClick={() => setIsLogin(!isLogin)}>
+            {isLogin ? 'Noch kein Account? Jetzt registrieren' : 'Bereits registriert? Anmelden'}
+          </button>
+          {isLogin && (
+            <div style={{ marginTop: 8 }}>
+              <a href="/reset" className="muted">Passwort vergessen?</a>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

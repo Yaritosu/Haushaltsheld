@@ -22,6 +22,7 @@ Open http://localhost:3000.
 ```
 VITE_SUPABASE_URL=your-project-url
 VITE_SUPABASE_ANON_KEY=your-anon-key
+VITE_SITE_URL=https://your-app.vercel.app   # optional but recommended for password reset links
 ```
 3. Restart the dev server so env vars are picked up.
 
@@ -76,3 +77,5 @@ npx vercel --prod
 If you use Magic Links/OAuth, add your domains in Supabase → Authentication → URL Configuration:
 - Local dev: `http://localhost:3000` (and the actual port Vite prints, e.g. 3001)
 - Production: your Vercel URL (e.g. `https://your-app.vercel.app`)
+
+Tip: If you set `VITE_SITE_URL` to your Vercel domain, password reset emails will always point to `https://your-app.vercel.app/reset` in production, while local development keeps using `http://localhost:PORT/reset`.
