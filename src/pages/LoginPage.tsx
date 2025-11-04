@@ -34,8 +34,13 @@ export default function LoginPage({ onAuthSuccess }: Props) {
           }
         }
       } else {
-        // mock flow
+        // mock flow (Supabase nicht konfiguriert)
         await new Promise((r) => setTimeout(r, 400))
+        if (!isLogin) {
+          // Bei Registrierung ohne Supabase: Zeige Erfolg, dann automatisch einloggen
+          setInfo('Mock-Registrierung erfolgreich. Du wirst jetzt eingeloggt...')
+          await new Promise((r) => setTimeout(r, 1000))
+        }
       }
       onAuthSuccess?.()
     } catch (err: any) {
