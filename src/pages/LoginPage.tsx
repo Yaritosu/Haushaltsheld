@@ -23,13 +23,22 @@ export default function LoginPage({ onAuthSuccess }: Props) {
           const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
           if (signInError) throw signInError
         } else {
-          const redirectTo = (SITE_URL || window.location.origin) + '/login'
-          const { data, error: signUpError } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: redirectTo } })
+          // Signup ohne emailRedirectTo (verhindert Redirect-Probleme)
+          const { data, error: signUpError } = await supabase.auth.signUp({ 
+            email, 
+            password,
+            options: {
+              data: {
+                email: email
+              }
+            }
+          })
           if (signUpError) throw signUpError
           // Wenn Email-Bestätigung aktiv ist, gibt es keine Session.
           if (!data.session) {
             setInfo('Registrierung erfolgreich. Bitte bestätige deine E‑Mail und melde dich danach an.')
             setPendingEmail(email)
+            setLoading(false)
             return
           }
         }
