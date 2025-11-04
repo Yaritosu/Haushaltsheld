@@ -346,6 +346,19 @@ button:active { transform: translateY(1px); }
   font-size: 0.9rem;
   color: var(--muted);
 }
+.donut-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem 0;
+}
+.donut-svg {
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4));
+}
+.donut-progress {
+  stroke: rgba(255,255,255,0.15);
+  backdrop-filter: blur(8px);
+}
 .progress-bar {
   position: relative;
   width: 100%;

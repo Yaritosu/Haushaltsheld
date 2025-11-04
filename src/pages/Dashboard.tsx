@@ -127,10 +127,49 @@ export default function Dashboard({ onLogout }: Props) {
                 <span>{currentPoints} / {goalPoints} P</span>
                 <span>noch {goalPoints - currentPoints > 0 ? goalPoints - currentPoints : 0} P</span>
               </div>
-              <div className="progress-bar">
-                <div className="progress-fill" style={{ width: `${progressPercent}%` }}>
-                  <span className="progress-percent">{Math.round(progressPercent)}%</span>
-                </div>
+              <div className="donut-container">
+                <svg className="donut-svg" viewBox="0 0 180 180" style={{ width: 180, height: 180 }}>
+                  <circle
+                    className="donut-bg"
+                    cx="90"
+                    cy="90"
+                    r="70"
+                    fill="none"
+                    stroke="rgba(255,255,255,0.1)"
+                    strokeWidth="20"
+                  />
+                  <circle
+                    className="donut-progress"
+                    cx="90"
+                    cy="90"
+                    r="70"
+                    fill="none"
+                    stroke="rgba(255,255,255,0.15)"
+                    strokeWidth="20"
+                    strokeDasharray={`${(progressPercent / 100) * 440} 440`}
+                    strokeLinecap="round"
+                    transform="rotate(-90 90 90)"
+                    style={{
+                      backdropFilter: 'blur(8px)',
+                      filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.3))',
+                      transition: 'stroke-dasharray 0.5s ease',
+                    }}
+                  />
+                  <text
+                    x="90"
+                    y="90"
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    style={{
+                      fontSize: '32px',
+                      fontWeight: 'bold',
+                      fill: 'white',
+                      textShadow: '0 2px 4px rgba(0,0,0,0.5)',
+                    }}
+                  >
+                    {Math.round(progressPercent)}%
+                  </text>
+                </svg>
               </div>
             </div>
             <button className="card-action-btn">
