@@ -166,9 +166,21 @@ button:active { transform: translateY(1px); }
   border-bottom: 1px solid rgba(255, 215, 0, 0.12);
   box-shadow: 0 2px 10px rgba(0,0,0,0.45);
   padding: 1rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 .dashboard .app-header h1 { margin: 0 0 0.25rem 0; font-size: 1.5rem; }
 .dashboard .app-header .muted { font-size: 0.85rem; }
+
+/* Logout Button */
+.logout-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
 
 /* Navigation Bar */
 .app-nav {
@@ -188,8 +200,11 @@ button:active { transform: translateY(1px); }
   color: var(--muted);
   font-weight: 600;
   font-size: 0.9rem;
+  text-decoration: none;
+  display: inline-block;
   white-space: nowrap;
   transition: all 0.2s ease;
+  cursor: pointer;
 }
 .nav-btn:hover {
   background: rgba(255,255,255,0.08);
@@ -211,9 +226,22 @@ button:active { transform: translateY(1px); }
 
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
   margin-bottom: 2rem;
+}
+
+/* Responsive Grid: 3 → 2 → 1 Spalten */
+@media (max-width: 1200px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Dashboard Cards */

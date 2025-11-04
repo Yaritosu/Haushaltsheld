@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { SUPABASE_CONFIGURED, supabase } from '../lib/supabaseClient'
 import { useHousehold } from '../context/HouseholdContext'
+import AppShell from '../components/AppShell'
 
 type Props = { onLogout: () => void }
 
@@ -52,25 +53,7 @@ export default function Dashboard({ onLogout }: Props) {
   const progressPercent = Math.min((currentPoints / goalPoints) * 100, 100)
 
   return (
-    <div className="app-root dashboard">
-      <header className="app-header">
-        <div>
-          <h1>Haushaltsheld</h1>
-          <p className="muted" style={{ margin: 0 }}>
-            Angemeldet als: <strong>Admin</strong> · 👥 Mitglieder · 🔒 Admin · 🔑 Passwort ändern · 🚪 Logout
-          </p>
-        </div>
-      </header>
-
-      <nav className="app-nav">
-        <button className="nav-btn active">📊 Dashboard</button>
-        <button className="nav-btn">📝 Aufgaben</button>
-        <button className="nav-btn">📈 Statistiken</button>
-        <button className="nav-btn">🎁 Wunschliste</button>
-        <button className="nav-btn">👥 Mitglieder</button>
-      </nav>
-
-      <main className="dashboard-main">
+    <AppShell onLogout={onLogout}>
         <div className="dashboard-grid">
           {/* Punktestand Card */}
           <div className="dashboard-card points-card">
@@ -188,7 +171,6 @@ export default function Dashboard({ onLogout }: Props) {
             )}
           </div>
         )}
-      </main>
-    </div>
+    </AppShell>
   )
 }

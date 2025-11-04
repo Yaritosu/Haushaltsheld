@@ -6,6 +6,10 @@ import OnboardingPage from './pages/OnboardingPage'
 import { SUPABASE_CONFIGURED, supabase } from './lib/supabaseClient'
 import ResetPassword from './pages/ResetPassword'
 import { HouseholdProvider } from './context/HouseholdContext'
+import TasksPage from './pages/TasksPage'
+import StatsPage from './pages/StatsPage'
+import WishlistPage from './pages/WishlistPage'
+import MembersPage from './pages/MembersPage'
 
 // Very simple mock auth using localStorage
 const AUTH_KEY = 'hh_auth'
@@ -65,6 +69,10 @@ export default function App() {
         <Route path="/reset" element={<ResetPassword />} />
         <Route path="/onboarding" element={isAuthed ? <OnboardingPage /> : <Navigate to="/login" replace />} />
         <Route path="/dashboard" element={isAuthed ? <Dashboard onLogout={handleLogout} /> : <Navigate to="/login" replace />} />
+        <Route path="/tasks" element={isAuthed ? <TasksPage onLogout={handleLogout} /> : <Navigate to="/login" replace />} />
+        <Route path="/stats" element={isAuthed ? <StatsPage onLogout={handleLogout} /> : <Navigate to="/login" replace />} />
+        <Route path="/wishlist" element={isAuthed ? <WishlistPage onLogout={handleLogout} /> : <Navigate to="/login" replace />} />
+        <Route path="/members" element={isAuthed ? <MembersPage onLogout={handleLogout} /> : <Navigate to="/login" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </HouseholdProvider>
