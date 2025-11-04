@@ -1,4 +1,5 @@
 import AppShell from '../components/AppShell';
+import { ChartPieIcon } from '@heroicons/react/24/outline';
 
 type Props = { onLogout: () => void };
 
@@ -7,7 +8,7 @@ export default function StatsPage({ onLogout }: Props) {
     <AppShell onLogout={onLogout}>
       <div className="dashboard-grid">
         <div className="dashboard-card">
-          <div className="card-icon">📈</div>
+          <div className="card-icon"><ChartPieIcon style={{ width: 28, height: 28 }} /></div>
           <h3>Statistiken</h3>
           <p className="muted">Hier kommen deine Auswertungen hin:</p>
           <ul className="muted" style={{ fontSize: '0.95rem', lineHeight: 1.6 }}>

@@ -95,7 +95,7 @@ export default function Dashboard({ onLogout }: Props) {
               <BanknotesIcon style={{ width: 18, height: 18, verticalAlign: 'text-bottom', marginRight: 8 }} />
               Punkte senden
             </button>
-            <button className="card-action-btn secondary">
+            <button className="card-action-btn secondary" onClick={() => navigate('/stats')}>
               <ArrowTrendingUpIcon style={{ width: 18, height: 18, verticalAlign: 'text-bottom', marginRight: 8 }} />
               Statistiken
             </button>
@@ -172,7 +172,7 @@ export default function Dashboard({ onLogout }: Props) {
                 </svg>
               </div>
             </div>
-            <button className="card-action-btn">
+            <button className="card-action-btn" onClick={() => navigate('/wishlist')}>
               <ArrowPathIcon style={{ width: 18, height: 18, verticalAlign: 'text-bottom', marginRight: 8 }} />
               Wechseln
             </button>
@@ -185,7 +185,7 @@ export default function Dashboard({ onLogout }: Props) {
                 <div className="card-icon"><ClipboardDocumentListIcon style={{ width: 28, height: 28 }} /></div>
                 <h3>Aufgaben</h3>
               </div>
-              <button className="small-add-btn">
+              <button className="small-add-btn" onClick={() => navigate('/tasks')}>
                 <ClipboardDocumentListIcon style={{ width: 16, height: 16, verticalAlign: 'text-bottom', marginRight: 6 }} />
                 Zu meinen Aufgaben
               </button>

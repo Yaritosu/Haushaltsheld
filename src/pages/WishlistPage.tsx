@@ -1,4 +1,5 @@
 import AppShell from '../components/AppShell';
+import { GiftIcon } from '@heroicons/react/24/outline';
 
 type Props = { onLogout: () => void };
 
@@ -14,7 +15,7 @@ export default function WishlistPage({ onLogout }: Props) {
   return (
     <AppShell onLogout={onLogout}>
       <div className="dashboard-card" style={{ maxWidth: 900, margin: '0 auto' }}>
-        <div className="card-icon">🎁</div>
+        <div className="card-icon"><GiftIcon style={{ width: 28, height: 28 }} /></div>
         <h3>Wunschliste</h3>
         <p className="muted">Alle Ziele deines Haushalts.</p>
         

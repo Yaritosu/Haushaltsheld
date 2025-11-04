@@ -1,4 +1,5 @@
 import AppShell from '../components/AppShell';
+import { UsersIcon } from '@heroicons/react/24/outline';
 
 type Props = { onLogout: () => void };
 
@@ -7,7 +8,7 @@ export default function MembersPage({ onLogout }: Props) {
     <AppShell onLogout={onLogout}>
       <div className="dashboard-grid">
         <div className="dashboard-card">
-          <div className="card-icon">👥</div>
+          <div className="card-icon"><UsersIcon style={{ width: 28, height: 28 }} /></div>
           <h3>Mitglieder</h3>
           <p className="muted">Verwalte die Mitglieder deines Haushalts.</p>
           <p className="muted" style={{ fontSize: '0.95rem', marginTop: '1rem' }}>
