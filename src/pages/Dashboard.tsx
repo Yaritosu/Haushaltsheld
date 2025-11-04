@@ -27,6 +27,17 @@ export default function Dashboard({ onLogout }: Props) {
   const [spentPoints, setSpentPoints] = useState(0)
   const [selectedGoal, setSelectedGoal] = useState<string>('PS5 (5000 P)')
 
+  // Load points from localStorage (temporary until DB wiring)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('hh_points')
+      const pts = raw ? parseInt(raw, 10) || 0 : 0
+      setCurrentPoints(pts)
+      setEarnedPoints(pts)
+      setSpentPoints(0)
+    } catch {}
+  }, [])
+
   // Mock-Ziele (später aus DB/Wunschzettel laden)
   const availableGoals = [
     'PS5 (5000 P)',
