@@ -165,41 +165,317 @@ button:active { transform: translateY(1px); }
   background: linear-gradient(180deg, #2a2a2a, #1f1f1f);
   border-bottom: 1px solid rgba(255, 215, 0, 0.12);
   box-shadow: 0 2px 10px rgba(0,0,0,0.45);
+  padding: 1rem 2rem;
 }
-.dashboard .header-actions { display: flex; align-items: center; gap: .5rem; }
+.dashboard .app-header h1 { margin: 0 0 0.25rem 0; font-size: 1.5rem; }
+.dashboard .app-header .muted { font-size: 0.85rem; }
 
-.dashboard .logout-btn {
-  background: rgba(255,255,255,0.16);
-  color: #111;
-  border: 1px solid rgba(255,255,255,0.28);
-  -webkit-backdrop-filter: blur(8px) saturate(120%);
-  backdrop-filter: blur(8px) saturate(120%);
-  padding: .55rem .85rem;
-  border-radius: 10px;
-  font-weight: 700;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), 0 6px 18px rgba(0,0,0,0.35);
+/* Navigation Bar */
+.app-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 2rem;
+  background: #2a2a2a;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.08);
+  overflow-x: auto;
 }
-.dashboard .logout-btn:hover {
-  background: rgba(255,255,255,0.22);
-  border-color: rgba(255,255,255,0.4);
+.nav-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  transition: all 0.2s ease;
 }
-.dashboard .logout-btn:active { transform: translateY(1px); }
+.nav-btn:hover {
+  background: rgba(255,255,255,0.08);
+  color: #efefef;
+}
+.nav-btn.active {
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255, 215, 0, 0.25);
+  color: var(--bronze-light);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
 
-.dashboard .container { width: 100%; }
-.dashboard .grid {
+/* Dashboard Main */
+.dashboard-main {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.dashboard-grid {
   display: grid;
-  width: 100%;
-  max-width: 1200px;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
 }
 
-.dashboard .card {
-  max-width: none;
+/* Dashboard Cards */
+.dashboard-card {
   border-radius: 14px;
-  /* toned-down metallic panel */
+  padding: 1.5rem;
   background: linear-gradient(135deg, var(--bronze-dark) 0%, var(--bronze-mid) 30%, var(--bronze) 60%, var(--bronze-mid) 100%);
   border: 1px solid rgba(255, 215, 0, 0.12);
   box-shadow: 0 8px 20px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.05);
+  position: relative;
 }
-.dashboard .card h2 { margin-top: 0; }
+.dashboard-card h3 {
+  margin: 0.5rem 0 1rem 0;
+  font-size: 1.25rem;
+  color: #efefef;
+}
+.card-icon {
+  font-size: 2rem;
+  display: inline-block;
+  margin-bottom: 0.5rem;
+}
+
+/* Punktestand Card */
+.points-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.points-display {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+.points-big {
+  font-size: 3rem;
+  font-weight: bold;
+  color: var(--bronze-light);
+  line-height: 1;
+}
+.points-label {
+  font-size: 1.5rem;
+  margin-left: 0.25rem;
+  color: var(--muted);
+}
+.points-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.95rem;
+}
+.points-line {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+}
+.points-line .earned { color: #6be76b; font-weight: 600; }
+.points-line .spent { color: #ff8888; font-weight: 600; }
+
+/* Wunschzettel Card */
+.wishlist-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.goal-selector {
+  margin: 0.5rem 0;
+}
+.goal-dropdown {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.16);
+  backdrop-filter: blur(8px) saturate(120%);
+  color: #111;
+  font-weight: 600;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), 0 0 0 1px rgba(0,0,0,0.25);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.goal-dropdown:focus {
+  outline: none;
+  border-color: rgba(255,255,255,0.45);
+  background: rgba(255,255,255,0.22);
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.12);
+}
+.goal-progress {
+  margin: 1rem 0;
+}
+.progress-text {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+.progress-bar {
+  position: relative;
+  width: 100%;
+  height: 32px;
+  background: rgba(0,0,0,0.35);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--bronze), var(--copper), var(--bronze-light));
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: width 0.4s ease;
+  box-shadow: 0 0 12px var(--glow);
+}
+.progress-percent {
+  font-weight: bold;
+  font-size: 0.9rem;
+  color: #111;
+  text-shadow: 0 1px 2px rgba(255,255,255,0.5);
+}
+
+/* Aufgaben Card */
+.tasks-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.card-header-with-btn {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.small-add-btn {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.85rem;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 8px;
+  color: #111;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+.small-add-btn:hover {
+  background: rgba(255,255,255,0.18);
+  border-color: rgba(255,255,255,0.3);
+}
+.task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: rgba(0,0,0,0.2);
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.08);
+  transition: all 0.2s ease;
+}
+.task-item:hover {
+  background: rgba(0,0,0,0.3);
+  border-color: rgba(255,255,255,0.12);
+}
+.task-item input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: var(--bronze);
+}
+.task-item label {
+  flex: 1;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.task-title {
+  font-weight: 600;
+  color: #efefef;
+}
+.task-meta {
+  font-size: 0.85rem;
+}
+.task-check-btn {
+  padding: 0.35rem 0.65rem;
+  background: rgba(107,231,107,0.2);
+  border: 1px solid rgba(107,231,107,0.4);
+  color: #6be76b;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  transition: all 0.2s ease;
+}
+.task-check-btn:hover {
+  background: rgba(107,231,107,0.3);
+  border-color: rgba(107,231,107,0.6);
+}
+
+/* Card Action Buttons */
+.card-action-btn {
+  width: 100%;
+  padding: 0.65rem 1rem;
+  background: rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.28);
+  color: #111;
+  border-radius: 10px;
+  font-weight: 700;
+  backdrop-filter: blur(8px) saturate(120%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.28), 0 6px 18px rgba(0,0,0,0.35);
+  transition: all 0.2s ease;
+}
+.card-action-btn:hover {
+  background: rgba(255,255,255,0.22);
+  border-color: rgba(255,255,255,0.4);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), 0 8px 22px rgba(0,0,0,0.42);
+}
+.card-action-btn.secondary {
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.18);
+}
+.card-action-btn.secondary:hover {
+  background: rgba(255,255,255,0.14);
+}
+
+/* Admin Section */
+.admin-section {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, var(--bronze-dark) 0%, var(--bronze-mid) 50%, var(--bronze-dark) 100%);
+  border-radius: 14px;
+  border: 1px solid rgba(255, 215, 0, 0.12);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.45);
+  text-align: center;
+}
+.admin-toggle-btn {
+  padding: 0.65rem 1.25rem;
+  background: rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.28);
+  color: #111;
+  border-radius: 10px;
+  font-weight: 700;
+  backdrop-filter: blur(8px) saturate(120%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.28), 0 6px 18px rgba(0,0,0,0.35);
+}
+.admin-toggle-btn:hover {
+  background: rgba(255,255,255,0.22);
+  border-color: rgba(255,255,255,0.4);
+}
+.invite-code-display {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: rgba(0,0,0,0.25);
+  border-radius: 10px;
+}
+.invite-code {
+  font-size: 1.75rem;
+  font-weight: bold;
+  letter-spacing: 0.2em;
+  color: var(--bronze-light);
+  margin: 0.5rem 0;
+}
