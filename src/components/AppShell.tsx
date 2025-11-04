@@ -1,5 +1,13 @@
 import { ReactNode } from 'react';
 import { NavLink } from 'react-router-dom';
+import {
+  ArrowRightOnRectangleIcon,
+  ChartBarSquareIcon,
+  ClipboardDocumentListIcon,
+  ChartPieIcon,
+  GiftIcon,
+  UsersIcon,
+} from '@heroicons/react/24/outline'
 
 interface AppShellProps {
   children: ReactNode;
@@ -16,26 +24,32 @@ export default function AppShell({ children, onLogout }: AppShellProps) {
             Organisiere Aufgaben, Punkte und Wünsche
           </p>
         </div>
-        <button onClick={onLogout} className="logout-btn">
-          🚪 Logout
+        <button onClick={onLogout} className="logout-btn" aria-label="Logout">
+          <ArrowRightOnRectangleIcon style={{ width: 20, height: 20, verticalAlign: 'text-bottom', marginRight: 6 }} />
+          Logout
         </button>
       </header>
 
       <nav className="app-nav">
         <NavLink to="/dashboard" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
-          📊 Dashboard
+          <ChartBarSquareIcon style={{ width: 18, height: 18, verticalAlign: 'text-bottom', marginRight: 6 }} />
+          Dashboard
         </NavLink>
         <NavLink to="/tasks" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
-          📝 Aufgaben
+          <ClipboardDocumentListIcon style={{ width: 18, height: 18, verticalAlign: 'text-bottom', marginRight: 6 }} />
+          Aufgaben
         </NavLink>
         <NavLink to="/stats" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
-          📈 Statistiken
+          <ChartPieIcon style={{ width: 18, height: 18, verticalAlign: 'text-bottom', marginRight: 6 }} />
+          Statistiken
         </NavLink>
         <NavLink to="/wishlist" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
-          🎁 Wunschliste
+          <GiftIcon style={{ width: 18, height: 18, verticalAlign: 'text-bottom', marginRight: 6 }} />
+          Wunschliste
         </NavLink>
         <NavLink to="/members" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
-          👥 Mitglieder
+          <UsersIcon style={{ width: 18, height: 18, verticalAlign: 'text-bottom', marginRight: 6 }} />
+          Mitglieder
         </NavLink>
       </nav>
 

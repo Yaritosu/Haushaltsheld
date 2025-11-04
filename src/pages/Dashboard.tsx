@@ -3,6 +3,16 @@ import { useNavigate } from 'react-router-dom'
 import { SUPABASE_CONFIGURED, supabase } from '../lib/supabaseClient'
 import { useHousehold } from '../context/HouseholdContext'
 import AppShell from '../components/AppShell'
+import {
+  BanknotesIcon,
+  GiftIcon,
+  ClipboardDocumentListIcon,
+  ArrowPathIcon,
+  ArrowTrendingUpIcon,
+  CheckIcon,
+  KeyIcon,
+  LockClosedIcon,
+} from '@heroicons/react/24/outline'
 
 type Props = { onLogout: () => void }
 
@@ -57,7 +67,7 @@ export default function Dashboard({ onLogout }: Props) {
         <div className="dashboard-grid">
           {/* Punktestand Card */}
           <div className="dashboard-card points-card">
-            <div className="card-icon">💰</div>
+            <div className="card-icon"><BanknotesIcon style={{ width: 28, height: 28 }} /></div>
             <h3>Punktestand</h3>
             <div className="points-display">
               <div className="points-big">{currentPoints}<span className="points-label">P</span></div>
@@ -70,13 +80,19 @@ export default function Dashboard({ onLogout }: Props) {
                 </div>
               </div>
             </div>
-            <button className="card-action-btn">💵 Punkte senden</button>
-            <button className="card-action-btn secondary">📊 Statistiken</button>
+            <button className="card-action-btn">
+              <BanknotesIcon style={{ width: 18, height: 18, verticalAlign: 'text-bottom', marginRight: 8 }} />
+              Punkte senden
+            </button>
+            <button className="card-action-btn secondary">
+              <ArrowTrendingUpIcon style={{ width: 18, height: 18, verticalAlign: 'text-bottom', marginRight: 8 }} />
+              Statistiken
+            </button>
           </div>
 
           {/* Wunschzettel/Ziel Card */}
           <div className="dashboard-card wishlist-card">
-            <div className="card-icon">🎁</div>
+            <div className="card-icon"><GiftIcon style={{ width: 28, height: 28 }} /></div>
             <h3>Wunschzettel</h3>
             <div className="goal-selector">
               <label htmlFor="goal-select" className="muted" style={{ fontSize: '0.9rem', marginBottom: '8px', display: 'block' }}>
@@ -106,17 +122,23 @@ export default function Dashboard({ onLogout }: Props) {
                 </div>
               </div>
             </div>
-            <button className="card-action-btn">🔄 Wechseln</button>
+            <button className="card-action-btn">
+              <ArrowPathIcon style={{ width: 18, height: 18, verticalAlign: 'text-bottom', marginRight: 8 }} />
+              Wechseln
+            </button>
           </div>
 
           {/* Aufgaben Card */}
           <div className="dashboard-card tasks-card">
             <div className="card-header-with-btn">
               <div>
-                <div className="card-icon">📝</div>
+                <div className="card-icon"><ClipboardDocumentListIcon style={{ width: 28, height: 28 }} /></div>
                 <h3>Aufgaben</h3>
               </div>
-              <button className="small-add-btn">➕ Zu meinen Aufgaben</button>
+              <button className="small-add-btn">
+                <ClipboardDocumentListIcon style={{ width: 16, height: 16, verticalAlign: 'text-bottom', marginRight: 6 }} />
+                Zu meinen Aufgaben
+              </button>
             </div>
             <div className="task-list">
               <div className="task-item">
@@ -125,7 +147,9 @@ export default function Dashboard({ onLogout }: Props) {
                   <div className="task-title">Fenster Putzen</div>
                   <div className="task-meta muted">Ingo</div>
                 </label>
-                <button className="task-check-btn">✓</button>
+                <button className="task-check-btn" aria-label="Aufgabe abhaken">
+                  <CheckIcon style={{ width: 18, height: 18 }} />
+                </button>
               </div>
               <div className="task-item">
                 <input type="checkbox" id="task2" />
@@ -133,7 +157,9 @@ export default function Dashboard({ onLogout }: Props) {
                   <div className="task-title">Saugen</div>
                   <div className="task-meta muted"></div>
                 </label>
-                <button className="task-check-btn">✓</button>
+                <button className="task-check-btn" aria-label="Aufgabe abhaken">
+                  <CheckIcon style={{ width: 18, height: 18 }} />
+                </button>
               </div>
               <div className="task-item">
                 <input type="checkbox" id="task3" />
@@ -141,7 +167,9 @@ export default function Dashboard({ onLogout }: Props) {
                   <div className="task-title">Boden waschen</div>
                   <div className="task-meta muted">Keine Anfrage</div>
                 </label>
-                <button className="task-check-btn">✓</button>
+                <button className="task-check-btn" aria-label="Aufgabe abhaken">
+                  <CheckIcon style={{ width: 18, height: 18 }} />
+                </button>
               </div>
               <div className="task-item">
                 <input type="checkbox" id="task4" />
@@ -149,7 +177,9 @@ export default function Dashboard({ onLogout }: Props) {
                   <div className="task-title">Renovierung abschließen</div>
                   <div className="task-meta muted">Sofiel/Amelie</div>
                 </label>
-                <button className="task-check-btn">✓</button>
+                <button className="task-check-btn" aria-label="Aufgabe abhaken">
+                  <CheckIcon style={{ width: 18, height: 18 }} />
+                </button>
               </div>
             </div>
           </div>
@@ -158,7 +188,17 @@ export default function Dashboard({ onLogout }: Props) {
         {isAdmin && (
           <div className="admin-section">
             <button onClick={() => setShowInviteCode(!showInviteCode)} className="admin-toggle-btn">
-              {showInviteCode ? '🔒 Code verbergen' : '🔑 Einladungscode anzeigen'}
+              {showInviteCode ? (
+                <>
+                  <LockClosedIcon style={{ width: 18, height: 18, verticalAlign: 'text-bottom', marginRight: 8 }} />
+                  Code verbergen
+                </>
+              ) : (
+                <>
+                  <KeyIcon style={{ width: 18, height: 18, verticalAlign: 'text-bottom', marginRight: 8 }} />
+                  Einladungscode anzeigen
+                </>
+              )}
             </button>
             {showInviteCode && (
               <div className="invite-code-display">
