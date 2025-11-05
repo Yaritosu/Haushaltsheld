@@ -1,8 +1,9 @@
 import AppShell from '../components/AppShell';
-import { ChartPieIcon } from '@heroicons/react/24/outline';
+import { ChartPieIcon, CheckCircleIcon, TrophyIcon, CalendarDaysIcon, ClipboardDocumentCheckIcon } from '@heroicons/react/24/outline';
 import { useMemo } from 'react'
 import { useTasks } from '../context/TasksContext'
 import { useHousehold } from '../context/HouseholdContext'
+import { useWishlist } from '../context/WishlistContext'
 
 type Props = { onLogout: () => void };
 
@@ -21,8 +22,9 @@ function lastNMonthsLabels(n: number) {
 }
 
 export default function StatsPage({ onLogout }: Props) {
-  const { completions, currentUserId } = useTasks()
+  const { completions, currentUserId, tasks } = useTasks()
   const { membership } = useHousehold()
+  const { items: wishlistItems } = useWishlist()
   const labels = useMemo(() => lastNMonthsLabels(6), [])
 
   const byMonth = useMemo(() => {
@@ -48,6 +50,34 @@ export default function StatsPage({ onLogout }: Props) {
     return items
   }, [completions])
 
+  // Aufgabenhäufigkeit (nur task completions)
+  const taskCompletionCount = useMemo(() => {
+    const map: Record<string, number> = {}
+    for (const c of completions) {
+      if (c.delta > 0 && c.taskId.startsWith('t')) {
+        map[c.taskId] = (map[c.taskId] || 0) + 1
+      }
+    }
+    const list = Object.entries(map).map(([taskId, count]) => {
+      const task = tasks.find(t => t.id === taskId)
+      return { taskId, title: task?.title ?? taskId, count }
+    })
+    list.sort((a,b) => b.count - a.count)
+    return list.slice(0, 5)
+  }, [completions, tasks])
+
+  // Erledigte Aufgaben (unique tasks)
+  const uniqueTasksCompleted = useMemo(() => {
+    const set = new Set<string>()
+    for (const c of completions) {
+      if (c.delta > 0 && c.taskId.startsWith('t')) set.add(c.taskId)
+    }
+    return set.size
+  }, [completions])
+
+  // Eingelöste Wünsche
+  const redeemedWishes = useMemo(() => wishlistItems.filter(w => w.status === 'redeemed'), [wishlistItems])
+
   const maxVal = Math.max(1, ...Object.values(byMonth))
   const chartWidth = 520, chartHeight = 180, barGap = 12
   const barWidth = Math.floor((chartWidth - (labels.length+1)*barGap) / labels.length)
@@ -62,13 +92,12 @@ export default function StatsPage({ onLogout }: Props) {
   return (
     <AppShell onLogout={onLogout}>
       <div className="dashboard-grid">
+        {/* Punkte pro Monat */}
         <div className="dashboard-card">
-          <div className="card-icon"><ChartPieIcon style={{ width: 28, height: 28 }} /></div>
-          <h3>Statistiken</h3>
-          <p className="muted">Punkte aus erledigten Aufgaben (nur positive Abschlüsse)</p>
-
-          {/* Bar Chart */}
-          <div style={{ overflowX: 'auto', paddingBottom: '0.5rem' }}>
+          <div className="card-icon"><CalendarDaysIcon style={{ width: 28, height: 28 }} /></div>
+          <h3>Punkte pro Monat</h3>
+          <p className="muted">Verdiente Punkte über die letzten 6 Monate</p>
+          <div style={{ overflowX: 'auto', paddingBottom: '0.5rem', marginTop: '1rem' }}>
             <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} style={{ width: chartWidth, height: chartHeight }}>
               {labels.map((label, i) => {
                 const val = byMonth[label]
@@ -85,21 +114,85 @@ export default function StatsPage({ onLogout }: Props) {
               })}
             </svg>
           </div>
+        </div>
 
-          {/* Leaderboard */}
-          <div style={{ marginTop: '1rem' }}>
-            <div className="muted" style={{ fontWeight: 700, marginBottom: '0.5rem' }}>Leaderboard (Punkte gesamt)</div>
-            <div className="task-list">
-              {leaderboard.map(entry => (
-                <div key={entry.userId} className="task-item">
-                  <div className="task-title">{nameFor(entry.userId)}</div>
-                  <div className="muted" style={{ marginLeft: 'auto' }}>{entry.pts} P</div>
-                </div>
-              ))}
-              {leaderboard.length === 0 && (
-                <div className="task-item"><div className="muted">Noch keine Daten</div></div>
-              )}
-            </div>
+        {/* Leaderboard */}
+        <div className="dashboard-card">
+          <div className="card-icon"><TrophyIcon style={{ width: 28, height: 28 }} /></div>
+          <h3>Leaderboard</h3>
+          <p className="muted">Gesamtpunkte aller Mitglieder</p>
+          <div className="task-list" style={{ marginTop: '1rem' }}>
+            {leaderboard.map((entry, idx) => (
+              <div key={entry.userId} className="task-item">
+                <div style={{ fontWeight: 900, fontSize: '1.2rem', color: idx === 0 ? '#ffd700' : idx === 1 ? '#c0c0c0' : idx === 2 ? '#cd7f32' : '#fff', width: 32 }}>{idx+1}</div>
+                <div className="task-title">{nameFor(entry.userId)}</div>
+                <div className="muted" style={{ marginLeft: 'auto', fontWeight: 700 }}>{entry.pts} P</div>
+              </div>
+            ))}
+            {leaderboard.length === 0 && (
+              <div className="task-item"><div className="muted">Noch keine Daten</div></div>
+            )}
+          </div>
+        </div>
+
+        {/* Aufgaben-Häufigkeit */}
+        <div className="dashboard-card">
+          <div className="card-icon"><ClipboardDocumentCheckIcon style={{ width: 28, height: 28 }} /></div>
+          <h3>Top 5 Aufgaben</h3>
+          <p className="muted">Häufigste abgeschlossene Aufgaben</p>
+          <div className="task-list" style={{ marginTop: '1rem' }}>
+            {taskCompletionCount.map(t => (
+              <div key={t.taskId} className="task-item">
+                <div className="task-title">{t.title}</div>
+                <div className="muted" style={{ marginLeft: 'auto' }}>{t.count}x</div>
+              </div>
+            ))}
+            {taskCompletionCount.length === 0 && (
+              <div className="task-item"><div className="muted">Noch keine Aufgaben erledigt</div></div>
+            )}
+          </div>
+        </div>
+
+        {/* Erledigte Aufgaben */}
+        <div className="dashboard-card">
+          <div className="card-icon"><CheckCircleIcon style={{ width: 28, height: 28 }} /></div>
+          <h3>Erledigte Aufgaben</h3>
+          <p className="muted">Anzahl verschiedener erledigter Aufgaben</p>
+          <div className="points-big" style={{ margin: '1.5rem 0', textAlign: 'center' }}>{uniqueTasksCompleted}</div>
+        </div>
+
+        {/* Eingelöste Wünsche */}
+        <div className="dashboard-card">
+          <div className="card-icon"><ChartPieIcon style={{ width: 28, height: 28 }} /></div>
+          <h3>Eingelöste Wünsche</h3>
+          <p className="muted">Liste aller eingelösten Wünsche</p>
+          <div className="task-list" style={{ marginTop: '1rem' }}>
+            {redeemedWishes.map(w => (
+              <div key={w.id} className="task-item">
+                <div className="task-title">{w.title}</div>
+                <div className="muted" style={{ marginLeft: 'auto' }}>{w.points} P</div>
+              </div>
+            ))}
+            {redeemedWishes.length === 0 && (
+              <div className="task-item"><div className="muted">Noch keine Wünsche eingelöst</div></div>
+            )}
+          </div>
+        </div>
+
+        {/* User-Vergleich */}
+        <div className="dashboard-card">
+          <div className="card-icon"><TrophyIcon style={{ width: 28, height: 28 }} /></div>
+          <h3>Dein Platz</h3>
+          <p className="muted">Deine Position im Ranking</p>
+          <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+            {leaderboard.findIndex(e => e.userId === currentUserId) >= 0 ? (
+              <>
+                <div className="points-big" style={{ margin: '1rem 0' }}>#{leaderboard.findIndex(e => e.userId === currentUserId) + 1}</div>
+                <div className="muted">von {leaderboard.length}</div>
+              </>
+            ) : (
+              <div className="muted">Noch keine Daten</div>
+            )}
           </div>
         </div>
       </div>

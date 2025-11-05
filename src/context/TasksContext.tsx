@@ -66,6 +66,11 @@ interface TasksContextType {
   isDueNow: (t: Task, now?: Date) => boolean
   completions: Array<{ taskId: string; userId: string; ts: number; points: number; delta: 1 | -1 }>
   addBonus: (userId: string, points: number, note?: string) => void
+  addAdjustment: (userId: string, points: number, note?: string) => void
+  transferPoints: (fromUserId: string, toUserId: string, points: number, note?: string) => void
+  getBalance: (userId?: string) => number
+  getEarned: (userId?: string) => number
+  getSpent: (userId?: string) => number
   clearAll: () => void
 }
 
@@ -215,8 +220,27 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
     const id = `bonus:${note ?? 'approval'}`
     setCompletions(log => [...log, { taskId: id, userId, ts: Date.now(), points, delta: 1 }])
   }
+  const addAdjustment = (userId: string, points: number, note?: string) => {
+    // points can be positive or negative; delta reflects sign for consistency
+    const id = `adjust:${note ?? ''}`
+    const delta: 1 | -1 = points >= 0 ? 1 : -1
+    setCompletions(log => [...log, { taskId: id, userId, ts: Date.now(), points: Math.abs(points), delta }])
+  }
+  const transferPoints = (fromUserId: string, toUserId: string, points: number, note?: string) => {
+    const p = Math.max(0, Math.floor(points))
+    const ts = Date.now()
+    setCompletions(log => [
+      ...log,
+      { taskId: `transfer:to:${toUserId}:${note ?? ''}` , userId: toUserId, ts, points: p, delta: 1 },
+      { taskId: `transfer:from:${fromUserId}:${note ?? ''}`, userId: fromUserId, ts, points: p, delta: -1 },
+    ])
+  }
+
+  const getEarned = (userId = currentUserId) => completions.filter(c => c.userId === userId && c.delta > 0).reduce((s,c) => s + c.points, 0)
+  const getSpent  = (userId = currentUserId) => completions.filter(c => c.userId === userId && c.delta < 0).reduce((s,c) => s + c.points, 0)
+  const getBalance = (userId = currentUserId) => getEarned(userId) - getSpent(userId)
   const clearAll = () => setTasks([])
 
-  const value: TasksContextType = { tasks, setTasks, currentUserId, myTasks, addTask, assignToMe, unassign, toggleDone, isDoneForNow, isDueNow, completions, addBonus, clearAll }
+  const value: TasksContextType = { tasks, setTasks, currentUserId, myTasks, addTask, assignToMe, unassign, toggleDone, isDoneForNow, isDueNow, completions, addBonus, addAdjustment, transferPoints, getBalance, getEarned, getSpent, clearAll }
   return <TasksContext.Provider value={value}>{children}</TasksContext.Provider>
 }

@@ -4,6 +4,7 @@ import { SUPABASE_CONFIGURED, supabase } from '../lib/supabaseClient'
 import { useHousehold } from '../context/HouseholdContext'
 import AppShell from '../components/AppShell'
 import { useTasks } from '../context/TasksContext'
+import { useWishlist } from '../context/WishlistContext'
 import {
   BanknotesIcon,
   GiftIcon,
@@ -23,20 +24,21 @@ export default function Dashboard({ onLogout }: Props) {
   const [showInviteCode, setShowInviteCode] = useState(false)
   
   // Punktesystem Anzeige (berechnet aus Aufgaben)
-  const { myTasks, currentUserId, isDoneForNow } = useTasks()
-  const earnedPoints = useMemo(() => myTasks.reduce((sum, t) => sum + (isDoneForNow(t, currentUserId) ? t.points : 0), 0), [myTasks, currentUserId, isDoneForNow])
-  const currentPoints = earnedPoints
-  const spentPoints = 0
-  const [selectedGoal, setSelectedGoal] = useState<string>('PS5 (5000 P)')
+  const { myTasks, currentUserId, isDoneForNow, getBalance, getEarned, getSpent } = useTasks()
+  const currentPoints = getBalance(currentUserId)
+  const earnedPoints = getEarned(currentUserId)
+  const spentPoints = getSpent(currentUserId)
+  const { items, redeem } = useWishlist()
+  const myWishes = useMemo(() => items.filter(i => i.status === 'assigned' && i.assignedTo === currentUserId), [items, currentUserId])
+  const openWishes = useMemo(() => items.filter(i => i.status === 'open'), [items])
+  
+  const [selectedGoalId, setSelectedGoalId] = useState<string>('')
 
-  // Mock-Ziele (später aus DB/Wunschzettel laden)
-  const availableGoals = [
-    'PS5 (5000 P)',
-    'Nintendo Switch (3000 P)',
-    'Neues Fahrrad (2000 P)',
-    'Laptop (6000 P)',
-    'Kopfhörer (800 P)',
-  ]
+  useEffect(() => {
+    if (myWishes.length > 0 && !selectedGoalId) {
+      setSelectedGoalId(myWishes[0].id)
+    }
+  }, [myWishes, selectedGoalId])
 
   useEffect(() => {
     if (!loading && !household && SUPABASE_CONFIGURED) {
@@ -59,10 +61,21 @@ export default function Dashboard({ onLogout }: Props) {
   }
   const isAdmin = membership?.role === 'admin'
 
-  // Parse Punkte aus dem ausgewählten Ziel
-  const goalPointsMatch = selectedGoal.match(/\((\d+)\s*P\)/)
-  const goalPoints = goalPointsMatch ? parseInt(goalPointsMatch[1], 10) : 5000
-  const progressPercent = Math.min((currentPoints / goalPoints) * 100, 100)
+  const selectedWish = myWishes.find(w => w.id === selectedGoalId)
+  const goalPoints = selectedWish?.points ?? 0
+  const progressPercent = goalPoints > 0 ? Math.min((currentPoints / goalPoints) * 100, 100) : 0
+  const canRedeem = selectedWish && currentPoints >= goalPoints
+
+  const handleRedeem = () => {
+    if (!selectedWish || !canRedeem) return
+    const success = redeem(selectedWish.id, currentUserId)
+    if (success) {
+      alert(`Wunsch "${selectedWish.title}" eingelöst! ${goalPoints} P wurden abgezogen.`)
+      setSelectedGoalId('')
+    } else {
+      alert('Einlösen fehlgeschlagen. Prüfe deinen Punktestand.')
+    }
+  }
 
   return (
     <AppShell onLogout={onLogout}>
@@ -82,7 +95,7 @@ export default function Dashboard({ onLogout }: Props) {
                 </div>
               </div>
             </div>
-            <button className="card-action-btn">
+            <button className="card-action-btn" onClick={() => navigate('/members')}>
               <BanknotesIcon style={{ width: 18, height: 18, verticalAlign: 'text-bottom', marginRight: 8 }} />
               Punkte senden
             </button>
@@ -96,78 +109,105 @@ export default function Dashboard({ onLogout }: Props) {
           <div className="dashboard-card wishlist-card">
             <div className="card-icon"><GiftIcon style={{ width: 28, height: 28 }} /></div>
             <h3>Wunschzettel</h3>
-            <div className="goal-selector">
-              <label htmlFor="goal-select" className="muted" style={{ fontSize: '0.9rem', marginBottom: '8px', display: 'block' }}>
-                Aktuelles Ziel
-              </label>
-              <select 
-                id="goal-select"
-                className="goal-dropdown"
-                value={selectedGoal}
-                onChange={(e) => setSelectedGoal(e.target.value)}
-              >
-                {availableGoals.map((goal) => (
-                  <option key={goal} value={goal}>
-                    {goal}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="goal-progress">
-              <div className="progress-text">
-                <span>{currentPoints} / {goalPoints} P</span>
-                <span>noch {goalPoints - currentPoints > 0 ? goalPoints - currentPoints : 0} P</span>
+            {myWishes.length === 0 && (
+              <div className="muted" style={{ marginTop: '1rem' }}>
+                Keine Wünsche zugeordnet. Wähle einen Wunsch im Wunschliste-Tab.
               </div>
-              <div className="donut-container">
-                <svg className="donut-svg" viewBox="0 0 180 180" style={{ width: 180, height: 180 }}>
-                  <circle
-                    className="donut-bg"
-                    cx="90"
-                    cy="90"
-                    r="70"
-                    fill="none"
-                    stroke="rgba(255,255,255,0.1)"
-                    strokeWidth="20"
-                  />
-                  <circle
-                    className="donut-progress"
-                    cx="90"
-                    cy="90"
-                    r="70"
-                    fill="none"
-                    stroke="rgba(255,255,255,0.15)"
-                    strokeWidth="20"
-                    strokeDasharray={`${(progressPercent / 100) * 440} 440`}
-                    strokeLinecap="round"
-                    transform="rotate(-90 90 90)"
-                    style={{
-                      backdropFilter: 'blur(8px)',
-                      filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.3))',
-                      transition: 'stroke-dasharray 0.5s ease',
-                    }}
-                  />
-                  <text
-                    x="90"
-                    y="90"
-                    textAnchor="middle"
-                    dominantBaseline="central"
-                    style={{
-                      fontSize: '32px',
-                      fontWeight: 'bold',
-                      fill: 'white',
-                      textShadow: '0 2px 4px rgba(0,0,0,0.5)',
-                    }}
+            )}
+            {myWishes.length > 0 && (
+              <>
+                <div className="goal-selector">
+                  <label htmlFor="goal-select" className="muted" style={{ fontSize: '0.9rem', marginBottom: '8px', display: 'block' }}>
+                    Aktuelles Ziel
+                  </label>
+                  <select 
+                    id="goal-select"
+                    className="goal-dropdown"
+                    value={selectedGoalId}
+                    onChange={(e) => setSelectedGoalId(e.target.value)}
                   >
-                    {Math.round(progressPercent)}%
-                  </text>
-                </svg>
-              </div>
-            </div>
-            <button className="card-action-btn" onClick={() => navigate('/wishlist')}>
+                    {myWishes.map((w) => (
+                      <option key={w.id} value={w.id}>
+                        {w.title} ({w.points} P)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="goal-progress">
+                  <div className="progress-text">
+                    <span>{currentPoints} / {goalPoints} P</span>
+                    <span>noch {goalPoints - currentPoints > 0 ? goalPoints - currentPoints : 0} P</span>
+                  </div>
+                  <div className="donut-container">
+                    <svg className="donut-svg" viewBox="0 0 180 180" style={{ width: 180, height: 180 }}>
+                      <circle
+                        className="donut-bg"
+                        cx="90"
+                        cy="90"
+                        r="70"
+                        fill="none"
+                        stroke="rgba(255,255,255,0.1)"
+                        strokeWidth="20"
+                      />
+                      <circle
+                        className="donut-progress"
+                        cx="90"
+                        cy="90"
+                        r="70"
+                        fill="none"
+                        stroke="rgba(255,255,255,0.15)"
+                        strokeWidth="20"
+                        strokeDasharray={`${(progressPercent / 100) * 440} 440`}
+                        strokeLinecap="round"
+                        transform="rotate(-90 90 90)"
+                        style={{
+                          backdropFilter: 'blur(8px)',
+                          filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.3))',
+                          transition: 'stroke-dasharray 0.5s ease',
+                        }}
+                      />
+                      <text
+                        x="90"
+                        y="90"
+                        textAnchor="middle"
+                        dominantBaseline="central"
+                        style={{
+                          fontSize: '32px',
+                          fontWeight: 'bold',
+                          fill: 'white',
+                          textShadow: '0 2px 4px rgba(0,0,0,0.5)',
+                        }}
+                      >
+                        {Math.round(progressPercent)}%
+                      </text>
+                    </svg>
+                  </div>
+                </div>
+                <button 
+                  className="card-action-btn"
+                  onClick={handleRedeem}
+                  disabled={!canRedeem}
+                  style={{
+                    background: canRedeem ? 'linear-gradient(135deg, #6be76b, #4fc44f)' : 'rgba(255,255,255,0.15)',
+                    color: canRedeem ? '#fff' : 'var(--muted)',
+                    fontWeight: canRedeem ? 900 : 700,
+                    cursor: canRedeem ? 'pointer' : 'not-allowed',
+                    boxShadow: canRedeem ? '0 4px 16px rgba(107, 231, 107, 0.4), inset 0 1px 0 rgba(255,255,255,0.2)' : 'none',
+                    transition: 'all 0.3s ease',
+                  }}
+                >
+                  <CheckIcon style={{ width: 18, height: 18, verticalAlign: 'text-bottom', marginRight: 8 }} />
+                  {canRedeem ? 'Einlösen' : `Noch ${goalPoints - currentPoints} P fehlen`}
+                </button>
+              </>
+            )}
+            <button className="card-action-btn secondary" onClick={() => navigate('/wishlist')} style={{ marginTop: '0.5rem' }}>
               <ArrowPathIcon style={{ width: 18, height: 18, verticalAlign: 'text-bottom', marginRight: 8 }} />
-              Wechseln
+              Wunschliste verwalten
             </button>
           </div>
+
+
 
           {/* Aufgaben Card */}
           <div className="dashboard-card tasks-card">

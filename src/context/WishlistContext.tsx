@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 import { useHousehold } from './HouseholdContext'
 import { useTasks } from './TasksContext'
 
-export type WishlistStatus = 'pending' | 'approved' | 'rejected' | 'redeemed'
+export type WishlistStatus = 'open' | 'assigned' | 'redeemed' | 'rejected'
 export type WishlistItem = {
   id: string
   title: string
@@ -11,6 +11,7 @@ export type WishlistItem = {
   status: WishlistStatus
   createdAt: number
   decidedAt?: number
+  assignedTo?: string | null
 }
 
 const LS_WISHLIST_KEY = 'hh_wishlist_v1'
@@ -19,9 +20,10 @@ interface WishlistContextType {
   items: WishlistItem[]
   myItems: WishlistItem[]
   addItem: (title: string, points: number, createdBy?: string) => void
-  approve: (id: string, awardNow?: boolean) => void
+  assignTo: (id: string, userId: string) => void
+  unassign: (id: string) => void
+  redeem: (id: string, userId: string) => boolean
   reject: (id: string) => void
-  markRedeemed: (id: string) => void
 }
 
 const WishlistContext = createContext<WishlistContextType | undefined>(undefined)
@@ -34,7 +36,7 @@ export function useWishlist() {
 
 export function WishlistProvider({ children }: { children: React.ReactNode }) {
   const { membership } = useHousehold()
-  const { currentUserId, addBonus } = useTasks()
+  const { currentUserId, getBalance, addAdjustment } = useTasks()
   const [items, setItems] = useState<WishlistItem[]>(() => {
     try {
       const raw = localStorage.getItem(LS_WISHLIST_KEY)
@@ -55,21 +57,31 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
       title,
       points,
       createdBy,
-      status: 'pending',
+      status: 'open',
       createdAt: Date.now(),
+      assignedTo: null,
     }
     setItems(prev => [it, ...prev])
   }
-  const approve = (id: string, awardNow = false) => {
-    setItems(prev => prev.map(i => i.id === id ? { ...i, status: 'approved', decidedAt: Date.now() } : i))
-    if (awardNow) {
-      const it = items.find(i => i.id === id)
-      if (it) addBonus(it.createdBy, it.points, `wishlist:${it.title}`)
-    }
+  const assignTo = (id: string, userId: string) => {
+    setItems(prev => prev.map(i => (i.id === id && i.status === 'open') ? { ...i, status: 'assigned', assignedTo: userId } : i))
+  }
+  const unassign = (id: string) => {
+    setItems(prev => prev.map(i => (i.id === id && i.status === 'assigned') ? { ...i, status: 'open', assignedTo: null } : i))
+  }
+  const redeem = (id: string, userId: string) => {
+    const it = items.find(i => i.id === id)
+    if (!it) return false
+    if (it.status !== 'assigned' || it.assignedTo !== userId) return false
+    const bal = getBalance(userId)
+    if (bal < it.points) return false
+    // deduct and mark redeemed
+    addAdjustment(userId, -it.points, `redeem:${it.title}`)
+    setItems(prev => prev.map(i => i.id === id ? { ...i, status: 'redeemed', decidedAt: Date.now() } : i))
+    return true
   }
   const reject = (id: string) => setItems(prev => prev.map(i => i.id === id ? { ...i, status: 'rejected', decidedAt: Date.now() } : i))
-  const markRedeemed = (id: string) => setItems(prev => prev.map(i => i.id === id ? { ...i, status: 'redeemed' } : i))
 
-  const value: WishlistContextType = { items, myItems, addItem, approve, reject, markRedeemed }
+  const value: WishlistContextType = { items, myItems, addItem, assignTo, unassign, redeem, reject }
   return <WishlistContext.Provider value={value}>{children}</WishlistContext.Provider>
 }

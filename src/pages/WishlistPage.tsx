@@ -1,16 +1,16 @@
 import AppShell from '../components/AppShell';
-import { GiftIcon, CheckCircleIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { GiftIcon } from '@heroicons/react/24/outline';
 import { useWishlist } from '../context/WishlistContext'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useHousehold } from '../context/HouseholdContext'
 import { useTasks } from '../context/TasksContext'
 
 type Props = { onLogout: () => void };
 
 export default function WishlistPage({ onLogout }: Props) {
-  const { items, addItem, approve, reject } = useWishlist()
+  const { items, addItem, assignTo, unassign, redeem } = useWishlist()
   const { membership } = useHousehold()
-  const { currentUserId } = useTasks()
+  const { currentUserId, getBalance } = useTasks()
   const [title, setTitle] = useState('')
   const [points, setPoints] = useState(500)
 
@@ -23,6 +23,8 @@ export default function WishlistPage({ onLogout }: Props) {
   }
 
   const isAdmin = membership?.role === 'admin'
+  const balance = getBalance(currentUserId)
+  const visibleItems = useMemo(() => items.filter(i => i.status !== 'redeemed'), [items])
 
   return (
     <AppShell onLogout={onLogout}>
@@ -38,30 +40,39 @@ export default function WishlistPage({ onLogout }: Props) {
         </form>
 
         <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          {items.map((it) => (
-            <div key={it.id} className="task-item" style={{ alignItems: 'center' }}>
-              <div>
-                <div className="task-title">{it.title}</div>
-                <div className="task-meta muted">{it.points} P • {it.status === 'pending' ? 'ausstehend' : it.status}</div>
-              </div>
-              <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
-                {isAdmin && it.status === 'pending' && (
-                  <>
-                    <button className="nav-btn" onClick={() => approve(it.id, true)} title="Freigeben & Punkte gutschreiben">
-                      <CheckCircleIcon style={{ width: 18, height: 18, verticalAlign: 'text-bottom', marginRight: 6 }} /> Freigeben
+          {visibleItems.map((it) => {
+            const mineAssigned = it.status === 'assigned' && it.assignedTo === currentUserId
+            const canRedeem = mineAssigned && balance >= it.points
+            return (
+              <div key={it.id} className="task-item" style={{ alignItems: 'center' }}>
+                <div>
+                  <div className="task-title">{it.title}</div>
+                  <div className="task-meta muted">{it.points} P • {it.status}{it.assignedTo && it.status !== 'redeemed' ? ` • zugeordnet` : ''}</div>
+                </div>
+                <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+                  {it.status === 'open' && (
+                    <button className="nav-btn" onClick={() => assignTo(it.id, currentUserId)}>
+                      Ich will das
                     </button>
-                    <button className="nav-btn" onClick={() => reject(it.id)} title="Ablehnen">
-                      <XMarkIcon style={{ width: 18, height: 18, verticalAlign: 'text-bottom', marginRight: 6 }} /> Ablehnen
-                    </button>
-                  </>
-                )}
-                {!isAdmin && it.createdBy === currentUserId && it.status === 'pending' && (
-                  <div className="muted">Wartet auf Freigabe…</div>
-                )}
+                  )}
+                  {it.status === 'assigned' && it.assignedTo === currentUserId && (
+                    <>
+                      <button className="nav-btn" onClick={() => unassign(it.id)}>
+                        Abgeben
+                      </button>
+                      <button className="nav-btn" disabled={!canRedeem} onClick={() => redeem(it.id, currentUserId)} title={canRedeem ? 'Einlösen' : 'Nicht genug Punkte'}>
+                        Einlösen
+                      </button>
+                    </>
+                  )}
+                  {it.status === 'assigned' && it.assignedTo !== currentUserId && (
+                    <button className="nav-btn" disabled>Schon vergeben</button>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
-          {items.length === 0 && (
+            )
+          })}
+          {visibleItems.length === 0 && (
             <div className="task-item"><div className="muted">Noch keine Wünsche</div></div>
           )}
         </div>
