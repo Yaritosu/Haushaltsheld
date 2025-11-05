@@ -8,6 +8,10 @@ import {
   GiftIcon,
   UsersIcon,
   ShoppingCartIcon,
+  Cog6ToothIcon,
+  CalendarDaysIcon,
+  CakeIcon,
+  TrophyIcon,
 } from '@heroicons/react/24/outline'
 
 interface AppShellProps {
@@ -55,6 +59,22 @@ export default function AppShell({ children, onLogout }: AppShellProps) {
         <NavLink to="/members" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
           <UsersIcon style={{ width: 18, height: 18, verticalAlign: 'text-bottom', marginRight: 6 }} />
           Mitglieder
+        </NavLink>
+        <NavLink to="/calendar" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
+          <CalendarDaysIcon style={{ width: 18, height: 18, verticalAlign: 'text-bottom', marginRight: 6 }} />
+          Kalender
+        </NavLink>
+        <NavLink to="/recipes" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
+          <CakeIcon style={{ width: 18, height: 18, verticalAlign: 'text-bottom', marginRight: 6 }} />
+          Rezepte
+        </NavLink>
+        <NavLink to="/achievements" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
+          <TrophyIcon style={{ width: 18, height: 18, verticalAlign: 'text-bottom', marginRight: 6 }} />
+          Auszeichnungen
+        </NavLink>
+        <NavLink to="/admin" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
+          <Cog6ToothIcon style={{ width: 18, height: 18, verticalAlign: 'text-bottom', marginRight: 6 }} />
+          Admin
         </NavLink>
       </nav>
 

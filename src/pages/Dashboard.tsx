@@ -5,6 +5,8 @@ import { useHousehold } from '../context/HouseholdContext'
 import AppShell from '../components/AppShell'
 import { useTasks } from '../context/TasksContext'
 import { useWishlist } from '../context/WishlistContext'
+import { useAchievements } from '../context/AchievementsContext'
+import { ACHIEVEMENTS } from '../data/achievements'
 import {
   BanknotesIcon,
   GiftIcon,
@@ -14,6 +16,7 @@ import {
   CheckIcon,
   KeyIcon,
   LockClosedIcon,
+  TrophyIcon,
 } from '@heroicons/react/24/outline'
 
 type Props = { onLogout: () => void }
@@ -24,13 +27,22 @@ export default function Dashboard({ onLogout }: Props) {
   const [showInviteCode, setShowInviteCode] = useState(false)
   
   // Punktesystem Anzeige (berechnet aus Aufgaben)
-  const { myTasks, currentUserId, isDoneForNow, getBalance, getEarned, getSpent } = useTasks()
+  const { myTasks, currentUserId, isDoneForNow, isDueNow, toggleDone, getBalance, getEarned, getSpent } = useTasks()
   const currentPoints = getBalance(currentUserId)
   const earnedPoints = getEarned(currentUserId)
   const spentPoints = getSpent(currentUserId)
   const { items, redeem } = useWishlist()
   const myWishes = useMemo(() => items.filter(i => i.status === 'assigned' && i.assignedTo === currentUserId), [items, currentUserId])
   const openWishes = useMemo(() => items.filter(i => i.status === 'open'), [items])
+  const { unlockedAchievements } = useAchievements()
+  const recentAchievements = useMemo(() => {
+    return unlockedAchievements
+      .slice()
+      .sort((a, b) => b.unlockedAt - a.unlockedAt)
+      .slice(0, 3)
+      .map(ua => ACHIEVEMENTS.find(a => a.id === ua.id))
+      .filter(Boolean)
+  }, [unlockedAchievements])
   
   const [selectedGoalId, setSelectedGoalId] = useState<string>('')
 
@@ -222,20 +234,95 @@ export default function Dashboard({ onLogout }: Props) {
               </button>
             </div>
             <div className="task-list">
-              {myTasks.slice(0, 4).map(t => (
-                <div key={t.id} className="task-item">
-                  <div style={{ width: 20, height: 20 }} />
-                  <div style={{ flex: 1 }}>
-                    <div className="task-title">{t.title}</div>
-                    <div className="task-meta muted">{t.points} P</div>
+              {myTasks.slice(0, 4).map(t => {
+                const done = isDoneForNow(t, currentUserId)
+                const due = isDueNow(t)
+                return (
+                  <div key={t.id} className="task-item" style={{ opacity: done ? 0.7 : 1 }}>
+                    <input 
+                      type="checkbox" 
+                      id={`dash-${t.id}`} 
+                      checked={done} 
+                      disabled={!due}
+                      onChange={() => toggleDone(t.id)} 
+                    />
+                    <label htmlFor={`dash-${t.id}`} style={{ flex: 1 }}>
+                      <div className="task-title" style={{ textDecoration: done ? 'line-through' : 'none' }}>{t.title}</div>
+                      <div className="task-meta muted">{t.points} P {due ? '' : '· (nicht fällig)'}</div>
+                    </label>
                   </div>
-                  <div className="muted" style={{ fontWeight: 600 }}>{isDoneForNow(t, currentUserId) ? '✔' : ''}</div>
-                </div>
-              ))}
+                )
+              })}
               {myTasks.length === 0 && (
                 <div className="task-item">
                   <div className="task-title">Keine Aufgaben zugewiesen</div>
                   <div className="task-meta muted">Weise dir Aufgaben im Aufgaben-Tab zu.</div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Achievements Card */}
+          <div className="dashboard-card achievements-card">
+            <div className="card-header-with-btn">
+              <div>
+                <div className="card-icon"><TrophyIcon style={{ width: 28, height: 28 }} /></div>
+                <h3>Auszeichnungen</h3>
+              </div>
+              <button className="small-add-btn" onClick={() => navigate('/achievements')}>
+                <TrophyIcon style={{ width: 16, height: 16, verticalAlign: 'text-bottom', marginRight: 6 }} />
+                Alle ansehen
+              </button>
+            </div>
+            <div style={{ marginTop: '1rem' }}>
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center',
+                marginBottom: '1rem',
+                padding: '0.75rem',
+                background: 'rgba(255, 215, 0, 0.15)',
+                borderRadius: '8px',
+                border: '1px solid rgba(255, 215, 0, 0.3)'
+              }}>
+                <span style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>
+                  {unlockedAchievements.length} / {ACHIEVEMENTS.length}
+                </span>
+                <span style={{ fontSize: '0.9rem', opacity: 0.8 }}>freigeschaltet</span>
+              </div>
+              
+              {recentAchievements.length === 0 ? (
+                <div className="muted" style={{ textAlign: 'center', padding: '1rem' }}>
+                  Erledige Aufgaben, um Auszeichnungen freizuschalten! 🏆
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {recentAchievements.map(ach => (
+                    <div key={ach?.id} style={{
+                      padding: '0.75rem',
+                      background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(184, 134, 11, 0.2))',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(255, 215, 0, 0.4)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.75rem'
+                    }}>
+                      <div style={{
+                        width: '40px',
+                        height: '40px',
+                        background: 'rgba(255, 215, 0, 0.3)',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '1.5rem'
+                      }}>🏆</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 'bold', fontSize: '0.95rem' }}>{ach?.title}</div>
+                        <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>{ach?.description}</div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

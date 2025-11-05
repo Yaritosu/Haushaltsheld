@@ -19,11 +19,13 @@ const LS_WISHLIST_KEY = 'hh_wishlist_v1'
 interface WishlistContextType {
   items: WishlistItem[]
   myItems: WishlistItem[]
+  setItems: React.Dispatch<React.SetStateAction<WishlistItem[]>>
   addItem: (title: string, points: number, createdBy?: string) => void
   assignTo: (id: string, userId: string) => void
   unassign: (id: string) => void
   redeem: (id: string, userId: string) => boolean
   reject: (id: string) => void
+  deleteItem: (id: string) => void
 }
 
 const WishlistContext = createContext<WishlistContextType | undefined>(undefined)
@@ -81,7 +83,8 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     return true
   }
   const reject = (id: string) => setItems(prev => prev.map(i => i.id === id ? { ...i, status: 'rejected', decidedAt: Date.now() } : i))
+  const deleteItem = (id: string) => setItems(prev => prev.filter(i => i.id !== id))
 
-  const value: WishlistContextType = { items, myItems, addItem, assignTo, unassign, redeem, reject }
+  const value: WishlistContextType = { items, myItems, setItems, addItem, assignTo, unassign, redeem, reject, deleteItem }
   return <WishlistContext.Provider value={value}>{children}</WishlistContext.Provider>
 }
