@@ -23,8 +23,8 @@ export default function Dashboard({ onLogout }: Props) {
   const [showInviteCode, setShowInviteCode] = useState(false)
   
   // Punktesystem Anzeige (berechnet aus Aufgaben)
-  const { myTasks, currentUserId } = useTasks()
-  const earnedPoints = useMemo(() => myTasks.reduce((sum, t) => sum + (t.doneBy?.[currentUserId] ? t.points : 0), 0), [myTasks, currentUserId])
+  const { myTasks, currentUserId, isDoneForNow } = useTasks()
+  const earnedPoints = useMemo(() => myTasks.reduce((sum, t) => sum + (isDoneForNow(t, currentUserId) ? t.points : 0), 0), [myTasks, currentUserId, isDoneForNow])
   const currentPoints = earnedPoints
   const spentPoints = 0
   const [selectedGoal, setSelectedGoal] = useState<string>('PS5 (5000 P)')
@@ -189,7 +189,7 @@ export default function Dashboard({ onLogout }: Props) {
                     <div className="task-title">{t.title}</div>
                     <div className="task-meta muted">{t.points} P</div>
                   </div>
-                  <div className="muted" style={{ fontWeight: 600 }}>{t.doneBy?.[currentUserId] ? '✔' : ''}</div>
+                  <div className="muted" style={{ fontWeight: 600 }}>{isDoneForNow(t, currentUserId) ? '✔' : ''}</div>
                 </div>
               ))}
               {myTasks.length === 0 && (

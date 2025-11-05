@@ -6,7 +6,7 @@ import { useTasks, ALL_AREAS, RECURRENCE_LABEL, RECURRENCE_ORDER, type Area, typ
  type Props = { onLogout: () => void };
 
  export default function TasksPage({ onLogout }: Props) {
-   const { tasks, currentUserId, addTask, assignToMe, unassign, toggleDone } = useTasks()
+  const { tasks, currentUserId, addTask, assignToMe, unassign, toggleDone, isDoneForNow } = useTasks()
    const [view, setView] = useState<'me' | 'all'>('me')
    const [showForm, setShowForm] = useState(false)
    const [title, setTitle] = useState('')
@@ -90,13 +90,13 @@ import { useTasks, ALL_AREAS, RECURRENCE_LABEL, RECURRENCE_ORDER, type Area, typ
                  <div className="muted" style={{ fontWeight: 700, marginBottom: '0.5rem' }}>{areaName}</div>
                  <div className="task-list">
                    {list.map(t => {
-                     const done = !!t.doneBy?.[currentUserId]
+                     const done = isDoneForNow(t, currentUserId)
                      return (
                        <div key={t.id} className="task-item" style={{ opacity: done ? 0.7 : 1 }}>
                          <input type="checkbox" id={t.id} checked={done} onChange={() => toggleDone(t.id)} />
                          <label htmlFor={t.id}>
                            <div className="task-title" style={{ textDecoration: done ? 'line-through' : 'none' }}>{t.title}</div>
-                           <div className="task-meta muted">{t.points} P · {RECURRENCE_LABEL[t.recurrence]} {t.assignee ? '· Zugeordnet' : ''}</div>
+                           <div className="task-meta muted">{t.points} P · {RECURRENCE_LABEL[t.recurrence]} {t.assignee ? `· Zugeordnet an: ${t.assignee === currentUserId ? 'Du' : 'Mitglied'}` : ''}</div>
                          </label>
                          {t.assignee === currentUserId ? (
                            <button className="card-action-btn secondary" style={{ width: 'auto' }} onClick={() => unassign(t.id)}>Zuweisung entfernen</button>

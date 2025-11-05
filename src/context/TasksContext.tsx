@@ -22,7 +22,11 @@ export type Task = {
   area: Area
   recurrence: Recurrence
   assignee?: string // user id
-  doneBy?: Record<string, boolean> // per-user done status
+  // per-user last completion timestamp (ms since epoch)
+  doneBy?: Record<string, number>
+  // optional schedule parameters (used for jaehrlich customization later)
+  yearlyMonth?: number // 1-12, default 6
+  yearlyDay?: number   // 1-31, default 1
 }
 
 const LS_TASKS_KEY = 'hh_tasks_v2'
@@ -55,6 +59,7 @@ interface TasksContextType {
   assignToMe: (taskId: string) => void
   unassign: (taskId: string) => void
   toggleDone: (taskId: string) => void
+  isDoneForNow: (t: Task, userId?: string, now?: Date) => boolean
   clearAll: () => void
 }
 
@@ -96,6 +101,40 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
 
   const myTasks = useMemo(() => tasks.filter(t => t.assignee === currentUserId), [tasks, currentUserId])
 
+  const weekStart = (d: Date) => {
+    const dt = new Date(d)
+    const day = (dt.getDay() + 6) % 7 // Monday=0
+    dt.setHours(0,0,0,0)
+    dt.setDate(dt.getDate() - day)
+    return dt.getTime()
+  }
+
+  const isDoneForNow = (t: Task, userId = currentUserId, nowDate = new Date()): boolean => {
+    const ts = t.doneBy?.[userId]
+    if (!ts) return false
+    const done = new Date(ts)
+    const now = new Date(nowDate)
+    switch (t.recurrence) {
+      case 'taeglich': {
+        return done.getFullYear() === now.getFullYear() && done.getMonth() === now.getMonth() && done.getDate() === now.getDate()
+      }
+      case 'woechentlich': {
+        return weekStart(done) === weekStart(now)
+      }
+      case 'monatlich': {
+        return done.getFullYear() === now.getFullYear() && done.getMonth() === now.getMonth()
+      }
+      case 'jaehrlich': {
+        // once per calendar year by default; can refine with yearlyMonth/yearlyDay later
+        return done.getFullYear() === now.getFullYear()
+      }
+      case 'einmalig':
+      case 'sonder':
+      default:
+        return true
+    }
+  }
+
   const addTask = (t: Omit<Task, 'id' | 'doneBy'>) => {
     setTasks(prev => [...prev, { ...t, id: 't' + Math.random().toString(36).slice(2, 9) }])
   }
@@ -109,12 +148,17 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
     setTasks(prev => prev.map(t => {
       if (t.id !== taskId) return t
       const doneBy = { ...(t.doneBy || {}) }
-      doneBy[currentUserId] = !doneBy[currentUserId]
+      if (isDoneForNow(t)) {
+        // mark as not done for current period
+        delete doneBy[currentUserId]
+      } else {
+        doneBy[currentUserId] = Date.now()
+      }
       return { ...t, doneBy }
     }))
   }
   const clearAll = () => setTasks([])
 
-  const value: TasksContextType = { tasks, setTasks, currentUserId, myTasks, addTask, assignToMe, unassign, toggleDone, clearAll }
+  const value: TasksContextType = { tasks, setTasks, currentUserId, myTasks, addTask, assignToMe, unassign, toggleDone, isDoneForNow, clearAll }
   return <TasksContext.Provider value={value}>{children}</TasksContext.Provider>
 }
