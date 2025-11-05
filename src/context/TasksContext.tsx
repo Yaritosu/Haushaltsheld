@@ -65,6 +65,7 @@ interface TasksContextType {
   isDoneForNow: (t: Task, userId?: string, now?: Date) => boolean
   isDueNow: (t: Task, now?: Date) => boolean
   completions: Array<{ taskId: string; userId: string; ts: number; points: number; delta: 1 | -1 }>
+  addBonus: (userId: string, points: number, note?: string) => void
   clearAll: () => void
 }
 
@@ -210,8 +211,12 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
       return { ...t, doneBy }
     }))
   }
+  const addBonus = (userId: string, points: number, note?: string) => {
+    const id = `bonus:${note ?? 'approval'}`
+    setCompletions(log => [...log, { taskId: id, userId, ts: Date.now(), points, delta: 1 }])
+  }
   const clearAll = () => setTasks([])
 
-  const value: TasksContextType = { tasks, setTasks, currentUserId, myTasks, addTask, assignToMe, unassign, toggleDone, isDoneForNow, isDueNow, completions, clearAll }
+  const value: TasksContextType = { tasks, setTasks, currentUserId, myTasks, addTask, assignToMe, unassign, toggleDone, isDoneForNow, isDueNow, completions, addBonus, clearAll }
   return <TasksContext.Provider value={value}>{children}</TasksContext.Provider>
 }

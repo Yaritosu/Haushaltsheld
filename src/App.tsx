@@ -11,6 +11,8 @@ import TasksPage from './pages/TasksPage'
 import StatsPage from './pages/StatsPage'
 import WishlistPage from './pages/WishlistPage'
 import MembersPage from './pages/MembersPage'
+import { WishlistProvider } from './context/WishlistContext'
+import ShoppingListPage from './pages/ShoppingListPage'
 
 // Very simple mock auth using localStorage
 const AUTH_KEY = 'hh_auth'
@@ -62,6 +64,7 @@ export default function App() {
   return (
     <HouseholdProvider>
       <TasksProvider>
+      <WishlistProvider>
       <Routes>
         <Route
           path="/"
@@ -74,9 +77,11 @@ export default function App() {
         <Route path="/tasks" element={isAuthed ? <TasksPage onLogout={handleLogout} /> : <Navigate to="/login" replace />} />
         <Route path="/stats" element={isAuthed ? <StatsPage onLogout={handleLogout} /> : <Navigate to="/login" replace />} />
         <Route path="/wishlist" element={isAuthed ? <WishlistPage onLogout={handleLogout} /> : <Navigate to="/login" replace />} />
+  <Route path="/shopping" element={isAuthed ? <ShoppingListPage onLogout={handleLogout} /> : <Navigate to="/login" replace />} />
         <Route path="/members" element={isAuthed ? <MembersPage onLogout={handleLogout} /> : <Navigate to="/login" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </WishlistProvider>
       </TasksProvider>
     </HouseholdProvider>
   )

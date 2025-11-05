@@ -7,6 +7,7 @@ import {
   ChartPieIcon,
   GiftIcon,
   UsersIcon,
+  ShoppingCartIcon,
 } from '@heroicons/react/24/outline'
 
 interface AppShellProps {
@@ -46,6 +47,10 @@ export default function AppShell({ children, onLogout }: AppShellProps) {
         <NavLink to="/wishlist" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
           <GiftIcon style={{ width: 18, height: 18, verticalAlign: 'text-bottom', marginRight: 6 }} />
           Wunschliste
+        </NavLink>
+        <NavLink to="/shopping" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
+          <ShoppingCartIcon style={{ width: 18, height: 18, verticalAlign: 'text-bottom', marginRight: 6 }} />
+          Einkauf
         </NavLink>
         <NavLink to="/members" className={({ isActive }) => `nav-btn ${isActive ? 'active' : ''}`}>
           <UsersIcon style={{ width: 18, height: 18, verticalAlign: 'text-bottom', marginRight: 6 }} />
