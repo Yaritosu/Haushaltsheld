@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { ACHIEVEMENTS, Achievement } from '../data/achievements'
 import { useTasks } from './TasksContext'
+import { useWishlist } from './WishlistContext'
 
 const LS_ACHIEVEMENTS_KEY = 'hh_achievements_v1'
 
@@ -20,7 +21,8 @@ const AchievementsContext = createContext<AchievementsContextType | null>(null)
 
 export function AchievementsProvider({ children }: { children: ReactNode }) {
   const [unlockedAchievements, setUnlockedAchievements] = useState<UnlockedAchievement[]>([])
-  const { completions, balance } = useTasks()
+  const { completions, currentUserId, getEarned } = useTasks()
+  const { items } = useWishlist()
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -47,18 +49,20 @@ export function AchievementsProvider({ children }: { children: ReactNode }) {
 
     switch (type) {
       case 'tasks_completed':
-        current = completions.filter(c => c.doneAt).length
+        current = completions
+          .filter(c => c.userId === currentUserId && c.delta > 0)
+          .filter(c => !(c.taskId.startsWith('bonus:') || c.taskId.startsWith('adjust:') || c.taskId.startsWith('transfer:')))
+          .length
         break
       case 'points_earned':
-        // Total earned = balance + spent
-        // We need to track total earned separately. For now, approximate:
-        current = balance.earned || 0
+        current = getEarned(currentUserId)
         break
       case 'task_streak': {
-        // Calculate longest streak of consecutive days with completions
+        // Calculate longest streak of consecutive days with real task completions
         const dates = completions
-          .filter(c => c.doneAt)
-          .map(c => new Date(c.doneAt).toDateString())
+          .filter(c => c.userId === currentUserId && c.delta > 0)
+          .filter(c => !(c.taskId.startsWith('bonus:') || c.taskId.startsWith('adjust:') || c.taskId.startsWith('transfer:')))
+          .map(c => new Date(c.ts).toDateString())
         const uniqueDates = Array.from(new Set(dates)).sort()
 
         let maxStreak = 0
@@ -84,23 +88,26 @@ export function AchievementsProvider({ children }: { children: ReactNode }) {
         break
       }
       case 'single_task_count': {
-        // Count completions for a single task (any task, find max)
+        // Count completions for a single REAL task (any task, find max)
         const taskCounts = new Map<string, number>()
-        completions.filter(c => c.doneAt).forEach(c => {
-          taskCounts.set(c.taskId, (taskCounts.get(c.taskId) || 0) + 1)
-        })
+        completions
+          .filter(c => c.userId === currentUserId && c.delta > 0)
+          .filter(c => !(c.taskId.startsWith('bonus:') || c.taskId.startsWith('adjust:') || c.taskId.startsWith('transfer:')))
+          .forEach(c => {
+            taskCounts.set(c.taskId, (taskCounts.get(c.taskId) || 0) + 1)
+          })
         current = Math.max(0, ...Array.from(taskCounts.values()))
         break
       }
       case 'wishes_redeemed': {
-        // Would need WishlistContext integration
-        // For now, placeholder
-        current = 0
+        current = items.filter(i => i.status === 'redeemed' && i.assignedTo === currentUserId).length
         break
       }
       case 'points_transferred': {
-        // Would need transfer tracking
-        current = 0
+        // Sum of points the user has transferred away
+        current = completions
+          .filter(c => c.userId === currentUserId && c.delta < 0 && c.taskId.startsWith('transfer:from'))
+          .reduce((sum, c) => sum + c.points, 0)
         break
       }
       case 'special':
@@ -133,10 +140,10 @@ export function AchievementsProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  // Auto-check on completions change
+  // Auto-check on relevant state changes
   useEffect(() => {
     checkAndUnlock()
-  }, [completions, balance])
+  }, [completions, items, currentUserId])
 
   return (
     <AchievementsContext.Provider value={{ unlockedAchievements, checkAndUnlock, isUnlocked, getProgress }}>
