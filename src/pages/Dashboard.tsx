@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { SUPABASE_CONFIGURED, supabase } from '../lib/supabaseClient'
 import { useHousehold } from '../context/HouseholdContext'
 import AppShell from '../components/AppShell'
+import { useTasks } from '../context/TasksContext'
 import {
   BanknotesIcon,
   GiftIcon,
@@ -21,22 +22,12 @@ export default function Dashboard({ onLogout }: Props) {
   const { household, membership, loading, refetch } = useHousehold()
   const [showInviteCode, setShowInviteCode] = useState(false)
   
-  // Punktesystem State (später aus DB laden)
-  const [currentPoints, setCurrentPoints] = useState(0)
-  const [earnedPoints, setEarnedPoints] = useState(0)
-  const [spentPoints, setSpentPoints] = useState(0)
+  // Punktesystem Anzeige (berechnet aus Aufgaben)
+  const { myTasks, currentUserId } = useTasks()
+  const earnedPoints = useMemo(() => myTasks.reduce((sum, t) => sum + (t.doneBy?.[currentUserId] ? t.points : 0), 0), [myTasks, currentUserId])
+  const currentPoints = earnedPoints
+  const spentPoints = 0
   const [selectedGoal, setSelectedGoal] = useState<string>('PS5 (5000 P)')
-
-  // Load points from localStorage (temporary until DB wiring)
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem('hh_points')
-      const pts = raw ? parseInt(raw, 10) || 0 : 0
-      setCurrentPoints(pts)
-      setEarnedPoints(pts)
-      setSpentPoints(0)
-    } catch {}
-  }, [])
 
   // Mock-Ziele (später aus DB/Wunschzettel laden)
   const availableGoals = [
@@ -191,46 +182,22 @@ export default function Dashboard({ onLogout }: Props) {
               </button>
             </div>
             <div className="task-list">
-              <div className="task-item">
-                <input type="checkbox" id="task1" />
-                <label htmlFor="task1">
-                  <div className="task-title">Fenster Putzen</div>
-                  <div className="task-meta muted">Ingo</div>
-                </label>
-                <button className="task-check-btn" aria-label="Aufgabe abhaken">
-                  <CheckIcon style={{ width: 18, height: 18 }} />
-                </button>
-              </div>
-              <div className="task-item">
-                <input type="checkbox" id="task2" />
-                <label htmlFor="task2">
-                  <div className="task-title">Saugen</div>
-                  <div className="task-meta muted"></div>
-                </label>
-                <button className="task-check-btn" aria-label="Aufgabe abhaken">
-                  <CheckIcon style={{ width: 18, height: 18 }} />
-                </button>
-              </div>
-              <div className="task-item">
-                <input type="checkbox" id="task3" />
-                <label htmlFor="task3">
-                  <div className="task-title">Boden waschen</div>
-                  <div className="task-meta muted">Keine Anfrage</div>
-                </label>
-                <button className="task-check-btn" aria-label="Aufgabe abhaken">
-                  <CheckIcon style={{ width: 18, height: 18 }} />
-                </button>
-              </div>
-              <div className="task-item">
-                <input type="checkbox" id="task4" />
-                <label htmlFor="task4">
-                  <div className="task-title">Renovierung abschließen</div>
-                  <div className="task-meta muted">Sofiel/Amelie</div>
-                </label>
-                <button className="task-check-btn" aria-label="Aufgabe abhaken">
-                  <CheckIcon style={{ width: 18, height: 18 }} />
-                </button>
-              </div>
+              {myTasks.slice(0, 4).map(t => (
+                <div key={t.id} className="task-item">
+                  <div style={{ width: 20, height: 20 }} />
+                  <div style={{ flex: 1 }}>
+                    <div className="task-title">{t.title}</div>
+                    <div className="task-meta muted">{t.points} P</div>
+                  </div>
+                  <div className="muted" style={{ fontWeight: 600 }}>{t.doneBy?.[currentUserId] ? '✔' : ''}</div>
+                </div>
+              ))}
+              {myTasks.length === 0 && (
+                <div className="task-item">
+                  <div className="task-title">Keine Aufgaben zugewiesen</div>
+                  <div className="task-meta muted">Weise dir Aufgaben im Aufgaben-Tab zu.</div>
+                </div>
+              )}
             </div>
           </div>
         </div>

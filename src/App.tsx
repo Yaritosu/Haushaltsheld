@@ -6,6 +6,7 @@ import OnboardingPage from './pages/OnboardingPage'
 import { SUPABASE_CONFIGURED, supabase } from './lib/supabaseClient'
 import ResetPassword from './pages/ResetPassword'
 import { HouseholdProvider } from './context/HouseholdContext'
+import { TasksProvider } from './context/TasksContext'
 import TasksPage from './pages/TasksPage'
 import StatsPage from './pages/StatsPage'
 import WishlistPage from './pages/WishlistPage'
@@ -60,6 +61,7 @@ export default function App() {
 
   return (
     <HouseholdProvider>
+      <TasksProvider>
       <Routes>
         <Route
           path="/"
@@ -75,6 +77,7 @@ export default function App() {
         <Route path="/members" element={isAuthed ? <MembersPage onLogout={handleLogout} /> : <Navigate to="/login" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </TasksProvider>
     </HouseholdProvider>
   )
 }
