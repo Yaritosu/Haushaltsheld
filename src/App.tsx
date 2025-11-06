@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import LoginPage from './pages/LoginPage'
 import Dashboard from './pages/Dashboard'
 import OnboardingPage from './pages/OnboardingPage'
@@ -19,6 +19,7 @@ import RecipesPage from './pages/RecipesPage'
 import AchievementsPage from './pages/AchievementsPage'
 import { AchievementsProvider } from './context/AchievementsContext'
 import { AchievementStatsPage } from './pages/AchievementStatsPage'
+import InvitePage from './pages/InvitePage'
 
 // Very simple mock auth using localStorage
 const AUTH_KEY = 'hh_auth'
@@ -26,6 +27,7 @@ const getIsAuthed = () => localStorage.getItem(AUTH_KEY) === '1'
 
 export default function App() {
   const [isAuthed, setIsAuthed] = useState<boolean>(getIsAuthed())
+  const navigate = useNavigate()
 
   useEffect(() => {
     // keep state in sync with storage changes (multi-tab safety)
@@ -41,6 +43,9 @@ export default function App() {
         if (session) {
           setIsAuthed(true)
           localStorage.setItem(AUTH_KEY, '1')
+          // Pending invite? Route zur Invite-Seite
+          const pending = localStorage.getItem('hh_pending_invite')
+          if (pending) navigate(`/invite/${pending}`, { replace: true })
         }
       })
       const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -48,6 +53,11 @@ export default function App() {
         setIsAuthed(authed)
         if (authed) localStorage.setItem(AUTH_KEY, '1')
         else localStorage.removeItem(AUTH_KEY)
+
+        if (authed) {
+          const pending = localStorage.getItem('hh_pending_invite')
+          if (pending) navigate(`/invite/${pending}`, { replace: true })
+        }
       })
       unsubscribe = () => subscription.unsubscribe()
     }
@@ -91,6 +101,7 @@ export default function App() {
         <Route path="/recipes" element={isAuthed ? <RecipesPage onLogout={handleLogout} /> : <Navigate to="/login" replace />} />
         <Route path="/achievements" element={isAuthed ? <AchievementsPage onLogout={handleLogout} /> : <Navigate to="/login" replace />} />
         <Route path="/achievement-stats" element={isAuthed ? <AchievementStatsPage /> : <Navigate to="/login" replace />} />
+  <Route path="/invite/:code" element={<InvitePage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       </AchievementsProvider>

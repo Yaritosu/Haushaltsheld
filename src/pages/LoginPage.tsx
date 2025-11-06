@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { SUPABASE_CONFIGURED, supabase, SITE_URL } from '../lib/supabaseClient'
 
 type Props = { onAuthSuccess?: () => void }
@@ -11,6 +11,13 @@ export default function LoginPage({ onAuthSuccess }: Props) {
   const [error, setError] = useState('')
   const [info, setInfo] = useState('')
   const [pendingEmail, setPendingEmail] = useState('')
+
+  // Pending invite Hinweis
+  const [pendingInvite, setPendingInvite] = useState<string | null>(null)
+  useEffect(() => {
+    const p = localStorage.getItem('hh_pending_invite')
+    if (p) setPendingInvite(p)
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -96,6 +103,11 @@ export default function LoginPage({ onAuthSuccess }: Props) {
                   </button>
                 </div>
               )}
+            </div>
+          )}
+          {pendingInvite && isLogin && (
+            <div style={{ textAlign: 'center', marginBottom: 8, fontSize: '0.85rem', opacity: 0.8 }}>
+              Du wurdest eingeladen. Nach erfolgreichem Login trittst du automatisch bei. Code: <strong>{pendingInvite}</strong>
             </div>
           )}
           <button className="primary" type="submit" disabled={loading}>{loading ? 'Lade…' : (isLogin ? 'Anmelden' : 'Registrieren')}</button>
