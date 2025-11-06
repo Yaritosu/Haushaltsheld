@@ -22,6 +22,7 @@ type UnlockedAchievement = {
 
 type AchievementsContextType = {
   unlockedAchievements: UnlockedAchievement[]
+  unlocked: string[]
   checkAndUnlock: () => void
   isUnlocked: (id: string) => boolean
   getProgress: (achievement: Achievement) => { current: number; target: number }
@@ -412,8 +413,10 @@ export function AchievementsProvider({ children }: { children: ReactNode }) {
     checkAndUnlock()
   }, [completions, items, currentUserId])
 
+  const unlocked = unlockedAchievements.map(a => a.id)
+
   return (
-    <AchievementsContext.Provider value={{ unlockedAchievements, checkAndUnlock, isUnlocked, getProgress }}>
+    <AchievementsContext.Provider value={{ unlockedAchievements, unlocked, checkAndUnlock, isUnlocked, getProgress }}>
       {children}
     </AchievementsContext.Provider>
   )
