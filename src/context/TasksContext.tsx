@@ -88,14 +88,8 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
       const raw = localStorage.getItem(LS_TASKS_KEY)
       if (raw) return JSON.parse(raw)
     } catch {}
-    // seed with sample tasks
-    const seed: Task[] = [
-      { id: 't1', title: 'Fenster putzen', points: 50, area: 'Wohnzimmer', recurrence: 'woechentlich', weeklyDay: 0 },
-      { id: 't2', title: 'Saugen', points: 30, area: 'Flur', recurrence: 'taeglich' },
-      { id: 't3', title: 'Boden wischen', points: 40, area: 'Küche', recurrence: 'woechentlich', weeklyDay: 2 },
-      { id: 't4', title: 'Gras mähen', points: 80, area: 'Garten', recurrence: 'monatlich', monthlyDay: 1 },
-    ]
-    return seed
+    // Leerer Start - keine Demo-Aufgaben
+    return []
   })
   const [currentUserId, setCurrentUserId] = useState<string>(getLocalUserId())
 

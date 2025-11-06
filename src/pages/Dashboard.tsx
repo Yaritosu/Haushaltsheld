@@ -19,6 +19,8 @@ import {
   TrophyIcon,
   ChartPieIcon,
   CalendarDaysIcon,
+  LinkIcon,
+  ClipboardDocumentIcon,
 } from '@heroicons/react/24/outline'
 
 type Props = { onLogout: () => void }
@@ -27,6 +29,7 @@ export default function Dashboard({ onLogout }: Props) {
   const navigate = useNavigate()
   const { household, membership, loading, refetch } = useHousehold()
   const [showInviteCode, setShowInviteCode] = useState(false)
+  const [inviteLinkCopied, setInviteLinkCopied] = useState(false)
   
   // Punktesystem Anzeige (berechnet aus Aufgaben)
   const { myTasks, currentUserId, isDoneForNow, isDueNow, toggleDone, getBalance, getEarned, getSpent } = useTasks()
@@ -436,28 +439,36 @@ export default function Dashboard({ onLogout }: Props) {
 
         {isAdmin && (
           <div className="admin-section">
-            <button onClick={() => setShowInviteCode(!showInviteCode)} className="admin-toggle-btn">
-              {showInviteCode ? (
+            <button 
+              onClick={() => {
+                if (household?.invite_code) {
+                  const link = `${window.location.origin}/invite/${household.invite_code}`
+                  navigator.clipboard.writeText(link).then(() => {
+                    setInviteLinkCopied(true)
+                    setTimeout(() => setInviteLinkCopied(false), 2000)
+                  })
+                }
+              }}
+              className="admin-toggle-btn"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem'
+              }}
+            >
+              {inviteLinkCopied ? (
                 <>
-                  <LockClosedIcon style={{ width: 18, height: 18, verticalAlign: 'text-bottom', marginRight: 8 }} />
-                  Code verbergen
+                  <CheckIcon style={{ width: 18, height: 18 }} />
+                  Link kopiert!
                 </>
               ) : (
                 <>
-                  <KeyIcon style={{ width: 18, height: 18, verticalAlign: 'text-bottom', marginRight: 8 }} />
-                  Einladungscode anzeigen
+                  <LinkIcon style={{ width: 18, height: 18 }} />
+                  Einladungslink kopieren
                 </>
               )}
             </button>
-            {showInviteCode && (
-              <div className="invite-code-display">
-                <p className="muted">Einladungscode für {household.name}:</p>
-                <div className="invite-code">{household.invite_code}</div>
-                <p className="muted" style={{ fontSize: '0.85rem' }}>
-                  Teile diesen Code, damit andere Mitglieder beitreten können.
-                </p>
-              </div>
-            )}
           </div>
         )}
     </AppShell>

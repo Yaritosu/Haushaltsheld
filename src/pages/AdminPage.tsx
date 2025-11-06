@@ -1,5 +1,5 @@
 import AppShell from '../components/AppShell';
-import { Cog6ToothIcon, PlusIcon, TrashIcon, PencilIcon } from '@heroicons/react/24/outline';
+import { Cog6ToothIcon, PlusIcon, TrashIcon, PencilIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react'
 import { useHousehold } from '../context/HouseholdContext'
 import { ALL_AREAS, type Area } from '../context/TasksContext'
@@ -12,6 +12,8 @@ export default function AdminPage({ onLogout }: Props) {
   const [newArea, setNewArea] = useState('')
   const [editingIdx, setEditingIdx] = useState<number | null>(null)
   const [editValue, setEditValue] = useState('')
+  const [showResetDialog, setShowResetDialog] = useState(false)
+  const [resetConfirmation, setResetConfirmation] = useState('')
 
   const isAdmin = membership?.role === 'admin'
 
@@ -36,6 +38,38 @@ export default function AdminPage({ onLogout }: Props) {
     setAreas(prev => prev.map((a, i) => i === editingIdx ? editValue : a))
     setEditingIdx(null)
     setEditValue('')
+  }
+
+  const handleReset = () => {
+    if (resetConfirmation !== 'RESET') {
+      alert('Bitte gib genau "RESET" ein, um fortzufahren.')
+      return
+    }
+
+    // Reset alle LocalStorage Keys
+    const keysToReset = [
+      'hh_tasks_v2',
+      'hh_task_log_v1',
+      'hh_wishlist_v1',
+      'hh_calendar_events_v1',
+      'hh_recipes_v1',
+      'hh_mealplan_v1',
+      'hh_achievements_v1',
+      'hh_registration_date'
+    ]
+
+    keysToReset.forEach(key => {
+      localStorage.removeItem(key)
+    })
+
+    alert('✅ Alle Daten wurden zurückgesetzt! Die Seite wird neu geladen...')
+    setShowResetDialog(false)
+    setResetConfirmation('')
+    
+    // Seite neu laden, damit alle Contexts neu initialisiert werden
+    setTimeout(() => {
+      window.location.reload()
+    }, 500)
   }
 
   if (!isAdmin) {
@@ -105,7 +139,110 @@ export default function AdminPage({ onLogout }: Props) {
             Hinweis: Änderungen werden nur lokal gespeichert. Für persistente Bereiche später Supabase-Integration nötig.
           </div>
         </div>
+
+        {/* Gefahrenzone - Reset */}
+        <div style={{ marginTop: '3rem', paddingTop: '2rem', borderTop: '2px solid rgba(255,100,100,0.3)' }}>
+          <h4 style={{ color: '#ff6b6b', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <ExclamationTriangleIcon style={{ width: 24, height: 24 }} />
+            Gefahrenzone
+          </h4>
+          <p className="muted" style={{ marginTop: '0.5rem' }}>
+            Diese Aktion löscht ALLE Daten: Aufgaben, Punkte, Statistiken, Wunschliste, Achievements, Kalender, Rezepte.
+          </p>
+          <button 
+            onClick={() => setShowResetDialog(true)}
+            style={{ 
+              marginTop: '1rem',
+              background: 'rgba(255,100,100,0.2)',
+              border: '2px solid rgba(255,100,100,0.5)',
+              color: '#ff6b6b',
+              fontWeight: 'bold'
+            }}
+          >
+            <TrashIcon style={{ width: 18, height: 18, verticalAlign: 'text-bottom', marginRight: 6 }} />
+            Alle Daten zurücksetzen
+          </button>
+        </div>
       </div>
+
+      {/* Reset Confirmation Dialog */}
+      {showResetDialog && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '1rem'
+        }}>
+          <div className="card" style={{ maxWidth: 500, width: '100%' }}>
+            <h3 style={{ color: '#ff6b6b', marginBottom: '1rem' }}>
+              ⚠️ Alle Daten zurücksetzen?
+            </h3>
+            <p style={{ marginBottom: '1rem' }}>
+              Diese Aktion kann <strong>NICHT</strong> rückgängig gemacht werden!
+            </p>
+            <p style={{ marginBottom: '1.5rem' }}>
+              Folgende Daten werden gelöscht:
+            </p>
+            <ul style={{ marginBottom: '1.5rem', paddingLeft: '1.5rem' }}>
+              <li>Alle Aufgaben</li>
+              <li>Alle Punkte & Statistiken</li>
+              <li>Wunschliste</li>
+              <li>Achievements & Fortschritt</li>
+              <li>Kalendereinträge</li>
+              <li>Rezepte & Essensplan</li>
+            </ul>
+            <p style={{ marginBottom: '1rem', fontWeight: 'bold' }}>
+              Gib zur Bestätigung das Wort <span style={{ color: '#ff6b6b', fontFamily: 'monospace', fontSize: '1.1rem' }}>RESET</span> ein:
+            </p>
+            <input 
+              type="text"
+              value={resetConfirmation}
+              onChange={(e) => setResetConfirmation(e.target.value)}
+              placeholder="RESET"
+              style={{ 
+                marginBottom: '1rem',
+                fontFamily: 'monospace',
+                fontSize: '1.1rem',
+                textAlign: 'center',
+                fontWeight: 'bold'
+              }}
+              autoFocus
+            />
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button 
+                onClick={() => {
+                  setShowResetDialog(false)
+                  setResetConfirmation('')
+                }}
+                style={{ flex: 1 }}
+              >
+                Abbrechen
+              </button>
+              <button 
+                onClick={handleReset}
+                disabled={resetConfirmation !== 'RESET'}
+                style={{ 
+                  flex: 1,
+                  background: resetConfirmation === 'RESET' ? 'rgba(255,100,100,0.3)' : 'rgba(100,100,100,0.2)',
+                  border: '2px solid rgba(255,100,100,0.5)',
+                  color: resetConfirmation === 'RESET' ? '#ff6b6b' : 'rgba(255,255,255,0.4)',
+                  fontWeight: 'bold',
+                  cursor: resetConfirmation === 'RESET' ? 'pointer' : 'not-allowed'
+                }}
+              >
+                Endgültig löschen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 }
