@@ -1,9 +1,10 @@
 import AppShell from '../components/AppShell';
-import { ChartPieIcon, CheckCircleIcon, TrophyIcon, CalendarDaysIcon, ClipboardDocumentCheckIcon } from '@heroicons/react/24/outline';
+import { ChartPieIcon, CheckCircleIcon, TrophyIcon, CalendarDaysIcon, ClipboardDocumentCheckIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import { useMemo } from 'react'
 import { useTasks } from '../context/TasksContext'
 import { useHousehold } from '../context/HouseholdContext'
 import { useWishlist } from '../context/WishlistContext'
+import { useAchievements } from '../context/AchievementsContext'
 
 type Props = { onLogout: () => void };
 
@@ -25,6 +26,7 @@ export default function StatsPage({ onLogout }: Props) {
   const { completions, currentUserId, tasks } = useTasks()
   const { membership } = useHousehold()
   const { items: wishlistItems } = useWishlist()
+  const { unlocked } = useAchievements()
   const labels = useMemo(() => lastNMonthsLabels(6), [])
 
   const byMonth = useMemo(() => {
@@ -77,6 +79,17 @@ export default function StatsPage({ onLogout }: Props) {
 
   // Eingelöste Wünsche
   const redeemedWishes = useMemo(() => wishlistItems.filter(w => w.status === 'redeemed'), [wishlistItems])
+
+  // Achievement Bonus Points
+  const achievementBonusPoints = useMemo(() => {
+    let total = 0
+    for (const c of completions) {
+      if (c.taskId.startsWith('achievement:')) {
+        total += c.points
+      }
+    }
+    return total
+  }, [completions])
 
   const maxVal = Math.max(1, ...Object.values(byMonth))
   const chartWidth = 520, chartHeight = 180, barGap = 12
@@ -193,6 +206,22 @@ export default function StatsPage({ onLogout }: Props) {
             ) : (
               <div className="muted">Noch keine Daten</div>
             )}
+          </div>
+        </div>
+
+        {/* Achievement Rewards */}
+        <div className="dashboard-card">
+          <div className="card-icon"><SparklesIcon style={{ width: 28, height: 28 }} /></div>
+          <h3>Achievement-Belohnungen</h3>
+          <p className="muted">Bonuspunkte durch Auszeichnungen</p>
+          <div style={{ marginTop: '1rem' }}>
+            <div className="points-big" style={{ margin: '1rem 0', textAlign: 'center' }}>
+              {achievementBonusPoints}
+            </div>
+            <div className="muted" style={{ textAlign: 'center', marginBottom: '0.5rem' }}>Bonuspunkte verdient</div>
+            <div className="muted" style={{ textAlign: 'center', fontSize: '0.9rem' }}>
+              {unlocked.length} Achievements × 10-50 Punkte
+            </div>
           </div>
         </div>
       </div>

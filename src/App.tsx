@@ -18,6 +18,7 @@ import CalendarPage from './pages/CalendarPage'
 import RecipesPage from './pages/RecipesPage'
 import AchievementsPage from './pages/AchievementsPage'
 import { AchievementsProvider } from './context/AchievementsContext'
+import { AchievementStatsPage } from './pages/AchievementStatsPage'
 
 // Very simple mock auth using localStorage
 const AUTH_KEY = 'hh_auth'
@@ -89,6 +90,7 @@ export default function App() {
         <Route path="/calendar" element={isAuthed ? <CalendarPage onLogout={handleLogout} /> : <Navigate to="/login" replace />} />
         <Route path="/recipes" element={isAuthed ? <RecipesPage onLogout={handleLogout} /> : <Navigate to="/login" replace />} />
         <Route path="/achievements" element={isAuthed ? <AchievementsPage onLogout={handleLogout} /> : <Navigate to="/login" replace />} />
+        <Route path="/achievement-stats" element={isAuthed ? <AchievementStatsPage /> : <Navigate to="/login" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       </AchievementsProvider>

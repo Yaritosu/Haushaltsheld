@@ -2,6 +2,7 @@ import React, { useMemo } from 'react'
 import { ACHIEVEMENTS } from '../data/achievements'
 import { useAchievements } from '../context/AchievementsContext'
 import AppShell from '../components/AppShell'
+import { useNavigate } from 'react-router-dom'
 import {
   CheckCircleIcon, CheckBadgeIcon, SparklesIcon, FireIcon, TrophyIcon, StarIcon, BoltIcon, RocketLaunchIcon,
   ShieldCheckIcon, BanknotesIcon, CurrencyDollarIcon, ChartBarIcon, ArrowTrendingUpIcon, PresentationChartLineIcon,
@@ -29,6 +30,7 @@ interface AchievementsPageProps {
 
 export default function AchievementsPage({ onLogout }: AchievementsPageProps) {
   const { isUnlocked, getProgress } = useAchievements()
+  const navigate = useNavigate()
 
   // Group achievements by category
   const grouped = useMemo(() => {
@@ -59,19 +61,46 @@ export default function AchievementsPage({ onLogout }: AchievementsPageProps) {
   return (
     <AppShell onLogout={onLogout}>
     <div style={{ padding: '2rem', color: 'white' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <h1 style={{ fontSize: '2rem', fontWeight: 'bold' }}>🏆 Auszeichnungen</h1>
-        <div style={{
-          background: 'rgba(255,255,255,0.15)',
-          backdropFilter: 'blur(12px)',
-          padding: '0.75rem 1.5rem',
-          borderRadius: '12px',
-          border: '1px solid rgba(255,255,255,0.2)'
-        }}>
-          <span style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>
-            {unlockedCount} / {ACHIEVEMENTS.length}
-          </span>
-          <span style={{ marginLeft: '0.5rem', opacity: 0.8 }}>freigeschaltet</span>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <button
+            onClick={() => navigate('/achievement-stats')}
+            style={{
+              background: 'rgba(255,255,255,0.15)',
+              backdropFilter: 'blur(12px)',
+              padding: '0.75rem 1.5rem',
+              borderRadius: '12px',
+              border: '1px solid rgba(255,255,255,0.2)',
+              color: 'white',
+              cursor: 'pointer',
+              fontSize: '1rem',
+              fontWeight: 500,
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.25)'
+              e.currentTarget.style.transform = 'translateY(-2px)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.15)'
+              e.currentTarget.style.transform = 'translateY(0)'
+            }}
+          >
+            📊 Statistiken
+          </button>
+          <div style={{
+            background: 'rgba(255,255,255,0.15)',
+            backdropFilter: 'blur(12px)',
+            padding: '0.75rem 1.5rem',
+            borderRadius: '12px',
+            border: '1px solid rgba(255,255,255,0.2)'
+          }}>
+            <span style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>
+              {unlockedCount} / {ACHIEVEMENTS.length}
+            </span>
+            <span style={{ marginLeft: '0.5rem', opacity: 0.8 }}>freigeschaltet</span>
+          </div>
         </div>
       </div>
 

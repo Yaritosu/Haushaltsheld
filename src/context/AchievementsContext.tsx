@@ -31,7 +31,7 @@ const AchievementsContext = createContext<AchievementsContextType | null>(null)
 
 export function AchievementsProvider({ children }: { children: ReactNode }) {
   const [unlockedAchievements, setUnlockedAchievements] = useState<UnlockedAchievement[]>([])
-  const { completions, currentUserId, getEarned, tasks } = useTasks()
+  const { completions, currentUserId, getEarned, tasks, addAdjustment } = useTasks()
   const { items } = useWishlist()
   const registrationDate = getRegistrationDate()
 
@@ -333,18 +333,27 @@ export function AchievementsProvider({ children }: { children: ReactNode }) {
     if (newUnlocks.length > 0) {
       setUnlockedAchievements(prev => [...prev, ...newUnlocks])
       
-      // Show toast notification
+      // Award bonus points and show toast notification
       newUnlocks.forEach(unlock => {
         const ach = ACHIEVEMENTS.find(a => a.id === unlock.id)
         if (ach) {
-          showAchievementToast(ach.title, ach.description)
+          // Determine reward based on achievement type
+          const isSpecial = ach.requirement.type === 'special'
+          const bonusPoints = isSpecial ? 50 : 10
+          
+          // Award points
+          if (currentUserId && addAdjustment) {
+            addAdjustment(currentUserId, bonusPoints, `achievement:${ach.id}`)
+          }
+          
+          showAchievementToast(ach.title, ach.description, bonusPoints)
         }
       })
       console.log('🏆 Neue Auszeichnungen freigeschaltet:', newUnlocks.length)
     }
   }
 
-  const showAchievementToast = (title: string, description: string) => {
+  const showAchievementToast = (title: string, description: string, bonusPoints: number) => {
     // Create toast element
     const toast = document.createElement('div')
     toast.style.cssText = `
@@ -365,9 +374,10 @@ export function AchievementsProvider({ children }: { children: ReactNode }) {
     toast.innerHTML = `
       <div style="display: flex; align-items: center; gap: 0.75rem;">
         <div style="font-size: 2rem;">🏆</div>
-        <div>
+        <div style="flex: 1;">
           <div style="font-size: 1.1rem; margin-bottom: 0.25rem;">${title}</div>
-          <div style="font-size: 0.85rem; opacity: 0.8;">${description}</div>
+          <div style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 0.25rem;">${description}</div>
+          <div style="font-size: 0.9rem; font-weight: bold; color: #006400;">+${bonusPoints} Bonuspunkte!</div>
         </div>
       </div>
     `

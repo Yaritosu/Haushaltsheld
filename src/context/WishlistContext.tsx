@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { useHousehold } from './HouseholdContext'
 import { useTasks } from './TasksContext'
+import { supabase, SUPABASE_CONFIGURED } from '../lib/supabaseClient'
 
 export type WishlistStatus = 'open' | 'assigned' | 'redeemed' | 'rejected'
 export type WishlistItem = {
@@ -49,7 +50,76 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     localStorage.setItem(LS_WISHLIST_KEY, JSON.stringify(items))
+    // Broadcast to other tabs
+    window.dispatchEvent(new StorageEvent('storage', {
+      key: LS_WISHLIST_KEY,
+      newValue: JSON.stringify(items)
+    }))
   }, [items])
+
+  // Listen for changes from other tabs
+  useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === LS_WISHLIST_KEY && e.newValue) {
+        try {
+          setItems(JSON.parse(e.newValue))
+        } catch {}
+      }
+    }
+    window.addEventListener('storage', handleStorage)
+    return () => window.removeEventListener('storage', handleStorage)
+  }, [])
+
+  // Supabase Realtime sync
+  useEffect(() => {
+    if (!SUPABASE_CONFIGURED || !supabase || !currentUserId) return
+
+    const channel = supabase
+      .channel('wishlist_realtime')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'wishlist'
+      }, (payload) => {
+        console.log('Realtime wishlist change:', payload)
+        if (payload.eventType === 'INSERT') {
+          const newItem = payload.new as any
+          setItems(prev => {
+            if (prev.find(i => i.id === newItem.id)) return prev
+            return [{
+              id: newItem.id,
+              title: newItem.title,
+              points: newItem.points,
+              createdBy: newItem.created_by,
+              status: newItem.status,
+              createdAt: new Date(newItem.created_at).getTime(),
+              decidedAt: newItem.decided_at ? new Date(newItem.decided_at).getTime() : undefined,
+              assignedTo: newItem.assigned_to
+            }, ...prev]
+          })
+        } else if (payload.eventType === 'UPDATE') {
+          const updated = payload.new as any
+          setItems(prev => prev.map(i => i.id === updated.id ? {
+            ...i,
+            title: updated.title,
+            points: updated.points,
+            status: updated.status,
+            decidedAt: updated.decided_at ? new Date(updated.decided_at).getTime() : i.decidedAt,
+            assignedTo: updated.assigned_to
+          } : i))
+        } else if (payload.eventType === 'DELETE') {
+          const deleted = payload.old as any
+          setItems(prev => prev.filter(i => i.id !== deleted.id))
+        }
+      })
+      .subscribe((status) => {
+        console.log('Wishlist realtime status:', status)
+      })
+
+    return () => {
+      channel.unsubscribe()
+    }
+  }, [currentUserId])
 
   const myItems = useMemo(() => items.filter(i => i.createdBy === currentUserId), [items, currentUserId])
 

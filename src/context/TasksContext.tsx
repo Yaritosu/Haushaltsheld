@@ -108,6 +108,11 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     localStorage.setItem(LS_TASKS_KEY, JSON.stringify(tasks))
+    // Broadcast to other tabs
+    window.dispatchEvent(new StorageEvent('storage', {
+      key: LS_TASKS_KEY,
+      newValue: JSON.stringify(tasks)
+    }))
   }, [tasks])
 
   const [completions, setCompletions] = useState<Array<{ taskId: string; userId: string; ts: number; points: number; delta: 1 | -1 }>>(() => {
@@ -120,7 +125,101 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     localStorage.setItem(LS_LOG_KEY, JSON.stringify(completions))
+    // Broadcast to other tabs
+    window.dispatchEvent(new StorageEvent('storage', {
+      key: LS_LOG_KEY,
+      newValue: JSON.stringify(completions)
+    }))
   }, [completions])
+
+  // Listen for changes from other tabs/windows
+  useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === LS_TASKS_KEY && e.newValue) {
+        try {
+          setTasks(JSON.parse(e.newValue))
+        } catch {}
+      } else if (e.key === LS_LOG_KEY && e.newValue) {
+        try {
+          setCompletions(JSON.parse(e.newValue))
+        } catch {}
+      }
+    }
+    
+    window.addEventListener('storage', handleStorage)
+    return () => window.removeEventListener('storage', handleStorage)
+  }, [])
+
+  // Supabase Realtime sync for multi-device support
+  useEffect(() => {
+    if (!SUPABASE_CONFIGURED || !supabase || !currentUserId) return
+
+    const channel = supabase
+      .channel('household_realtime')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'tasks'
+      }, (payload) => {
+        console.log('Realtime task change:', payload)
+        if (payload.eventType === 'INSERT') {
+          const newTask = payload.new as any
+          setTasks(prev => {
+            if (prev.find(t => t.id === newTask.id)) return prev
+            return [...prev, {
+              id: newTask.id,
+              title: newTask.title,
+              points: newTask.points,
+              area: newTask.area,
+              recurrence: newTask.recurrence,
+              assignee: newTask.assignee,
+              doneBy: newTask.done_by || {}
+            }]
+          })
+        } else if (payload.eventType === 'UPDATE') {
+          const updated = payload.new as any
+          setTasks(prev => prev.map(t => t.id === updated.id ? {
+            ...t,
+            title: updated.title,
+            points: updated.points,
+            area: updated.area,
+            recurrence: updated.recurrence,
+            assignee: updated.assignee,
+            doneBy: updated.done_by || t.doneBy
+          } : t))
+        } else if (payload.eventType === 'DELETE') {
+          const deleted = payload.old as any
+          setTasks(prev => prev.filter(t => t.id !== deleted.id))
+        }
+      })
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'task_log'
+      }, (payload) => {
+        console.log('Realtime completion:', payload)
+        const log = payload.new as any
+        setCompletions(prev => {
+          if (prev.find(c => c.taskId === log.task_id && c.userId === log.user_id && c.ts === new Date(log.completed_at).getTime())) {
+            return prev
+          }
+          return [...prev, {
+            taskId: log.task_id,
+            userId: log.user_id,
+            ts: new Date(log.completed_at).getTime(),
+            points: log.points_earned,
+            delta: 1
+          }]
+        })
+      })
+      .subscribe((status) => {
+        console.log('Realtime subscription status:', status)
+      })
+
+    return () => {
+      channel.unsubscribe()
+    }
+  }, [currentUserId])
 
   const myTasks = useMemo(() => tasks.filter(t => t.assignee === currentUserId), [tasks, currentUserId])
 
