@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Navigate, Route, Routes, useNavigate } from 'react-router-dom'
-import LoginPage from './pages/LoginPage'
+import LoginPageEnhanced from './pages/LoginPageEnhanced'
 import Dashboard from './pages/Dashboard'
-import OnboardingPage from './pages/OnboardingPage'
+import OnboardingPageEnhanced from './pages/OnboardingPageEnhanced'
 import { SUPABASE_CONFIGURED, supabase } from './lib/supabaseClient'
 import ResetPassword from './pages/ResetPassword'
 import { HouseholdProvider } from './context/HouseholdContext'
@@ -87,9 +87,9 @@ export default function App() {
           path="/"
           element={isAuthed ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />}
         />
-        <Route path="/login" element={isAuthed ? <Navigate to="/dashboard" replace /> : <LoginPage onAuthSuccess={handleLogin} />} />
+        <Route path="/login" element={isAuthed ? <Navigate to="/dashboard" replace /> : <LoginPageEnhanced onAuthSuccess={handleLogin} />} />
         <Route path="/reset" element={<ResetPassword />} />
-        <Route path="/onboarding" element={isAuthed ? <OnboardingPage /> : <Navigate to="/login" replace />} />
+        <Route path="/onboarding" element={isAuthed ? <OnboardingPageEnhanced /> : <Navigate to="/login" replace />} />
         <Route path="/dashboard" element={isAuthed ? <Dashboard onLogout={handleLogout} /> : <Navigate to="/login" replace />} />
         <Route path="/tasks" element={isAuthed ? <TasksPage onLogout={handleLogout} /> : <Navigate to="/login" replace />} />
         <Route path="/stats" element={isAuthed ? <StatsPage onLogout={handleLogout} /> : <Navigate to="/login" replace />} />

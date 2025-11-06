@@ -1,5 +1,5 @@
 import AppShell from '../components/AppShell';
-import { UsersIcon, PaperAirplaneIcon, BanknotesIcon } from '@heroicons/react/24/outline';
+import { UsersIcon, PaperAirplaneIcon, BanknotesIcon, LinkIcon, ClipboardDocumentIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { useEffect, useState } from 'react'
 import { useHousehold } from '../context/HouseholdContext'
 import { SUPABASE_CONFIGURED, supabase } from '../lib/supabaseClient'
@@ -12,6 +12,7 @@ export default function MembersPage({ onLogout }: Props) {
   const { currentUserId, transferPoints, addAdjustment, getBalance } = useTasks()
   const [members, setMembers] = useState<Array<{ id: string; role: string; email?: string | null; name?: string | null }>>([])
   const [loading, setLoading] = useState(false)
+  const [copied, setCopied] = useState(false)
   const isAdmin = membership?.role === 'admin'
 
   const handleTransfer = (toUserId: string) => {
@@ -54,9 +55,103 @@ export default function MembersPage({ onLogout }: Props) {
     load()
   }, [household])
 
+  const copyInviteLink = () => {
+    if (!household?.invite_code) return
+    const link = `${window.location.origin}/invite/${household.invite_code}`
+    navigator.clipboard.writeText(link).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
+
+  const copyInviteCode = () => {
+    if (!household?.invite_code) return
+    navigator.clipboard.writeText(household.invite_code).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
+
   return (
     <AppShell onLogout={onLogout}>
       <div className="dashboard-grid">
+        {/* Einladungscode (für Admins) */}
+        {isAdmin && household?.invite_code && SUPABASE_CONFIGURED && (
+          <div className="dashboard-card">
+            <div className="card-icon"><LinkIcon style={{ width: 28, height: 28 }} /></div>
+            <h3>Einladungscode</h3>
+            <p className="muted">Teile diesen Code oder Link, um neue Mitglieder einzuladen.</p>
+            <div style={{ marginTop: '1rem' }}>
+              <div style={{ 
+                background: 'rgba(255,255,255,0.1)', 
+                padding: '1rem', 
+                borderRadius: '8px',
+                textAlign: 'center',
+                marginBottom: '0.75rem'
+              }}>
+                <div style={{ fontSize: '0.8rem', marginBottom: '0.25rem', opacity: 0.7 }}>Code:</div>
+                <div style={{ 
+                  fontSize: '1.5rem', 
+                  fontWeight: 'bold',
+                  letterSpacing: '0.1em',
+                  fontFamily: 'monospace'
+                }}>
+                  {household.invite_code}
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <button 
+                  onClick={copyInviteCode}
+                  style={{ 
+                    flex: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    minWidth: '140px'
+                  }}
+                >
+                  {copied ? (
+                    <>
+                      <CheckIcon style={{ width: 18, height: 18 }} />
+                      Kopiert!
+                    </>
+                  ) : (
+                    <>
+                      <ClipboardDocumentIcon style={{ width: 18, height: 18 }} />
+                      Code kopieren
+                    </>
+                  )}
+                </button>
+                <button 
+                  onClick={copyInviteLink}
+                  className="primary"
+                  style={{ 
+                    flex: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    minWidth: '140px'
+                  }}
+                >
+                  {copied ? (
+                    <>
+                      <CheckIcon style={{ width: 18, height: 18 }} />
+                      Kopiert!
+                    </>
+                  ) : (
+                    <>
+                      <LinkIcon style={{ width: 18, height: 18 }} />
+                      Link kopieren
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="dashboard-card">
           <div className="card-icon"><UsersIcon style={{ width: 28, height: 28 }} /></div>
           <h3>Mitglieder</h3>
