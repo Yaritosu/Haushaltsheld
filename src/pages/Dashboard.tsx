@@ -17,6 +17,8 @@ import {
   KeyIcon,
   LockClosedIcon,
   TrophyIcon,
+  ChartPieIcon,
+  CalendarDaysIcon,
 } from '@heroicons/react/24/outline'
 
 type Props = { onLogout: () => void }
@@ -238,18 +240,45 @@ export default function Dashboard({ onLogout }: Props) {
                 const done = isDoneForNow(t, currentUserId)
                 const due = isDueNow(t)
                 return (
-                  <div key={t.id} className="task-item" style={{ opacity: done ? 0.7 : 1 }}>
-                    <input 
-                      type="checkbox" 
-                      id={`dash-${t.id}`} 
-                      checked={done} 
+                  <div key={t.id} className="task-item" style={{ 
+                    opacity: done ? 0.7 : 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                    padding: '0.75rem',
+                    background: 'rgba(255,255,255,0.05)',
+                    borderRadius: '8px',
+                    marginBottom: '0.5rem'
+                  }}>
+                    <div style={{ flex: 1 }}>
+                      <div className="task-title" style={{ 
+                        textDecoration: done ? 'line-through' : 'none',
+                        fontWeight: 600
+                      }}>{t.title}</div>
+                      <div className="task-meta muted" style={{ fontSize: '0.85rem' }}>
+                        {t.points} P {due ? '' : '· (nicht fällig)'}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => toggleDone(t.id)}
                       disabled={!due}
-                      onChange={() => toggleDone(t.id)} 
-                    />
-                    <label htmlFor={`dash-${t.id}`} style={{ flex: 1 }}>
-                      <div className="task-title" style={{ textDecoration: done ? 'line-through' : 'none' }}>{t.title}</div>
-                      <div className="task-meta muted">{t.points} P {due ? '' : '· (nicht fällig)'}</div>
-                    </label>
+                      style={{
+                        background: done 
+                          ? 'rgba(107, 231, 107, 0.3)' 
+                          : 'rgba(255,255,255,0.15)',
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        borderRadius: '6px',
+                        padding: '0.5rem',
+                        cursor: due ? 'pointer' : 'not-allowed',
+                        opacity: due ? 1 : 0.4,
+                        transition: 'all 0.2s ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      <CheckIcon style={{ width: 18, height: 18, color: 'white' }} />
+                    </button>
                   </div>
                 )
               })}
@@ -260,6 +289,82 @@ export default function Dashboard({ onLogout }: Props) {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Statistik Card */}
+          <div className="dashboard-card stats-card">
+            <div className="card-icon"><ChartPieIcon style={{ width: 28, height: 28 }} /></div>
+            <h3>Statistiken</h3>
+            <div style={{ marginTop: '1rem' }}>
+              <div style={{ 
+                display: 'flex', 
+                flexDirection: 'column',
+                gap: '0.75rem'
+              }}>
+                <div style={{
+                  padding: '0.75rem',
+                  background: 'rgba(255,255,255,0.05)',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(255,255,255,0.1)'
+                }}>
+                  <div style={{ fontSize: '0.85rem', opacity: 0.8, marginBottom: '0.25rem' }}>Aufgaben erledigt</div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
+                    {myTasks.filter(t => isDoneForNow(t, currentUserId)).length}
+                  </div>
+                </div>
+                <div style={{
+                  padding: '0.75rem',
+                  background: 'rgba(255,255,255,0.05)',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(255,255,255,0.1)'
+                }}>
+                  <div style={{ fontSize: '0.85rem', opacity: 0.8, marginBottom: '0.25rem' }}>Verdiente Punkte</div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#6be76b' }}>
+                    {earnedPoints} P
+                  </div>
+                </div>
+              </div>
+            </div>
+            <button className="card-action-btn secondary" onClick={() => navigate('/stats')} style={{ marginTop: '1rem' }}>
+              <ChartPieIcon style={{ width: 18, height: 18, verticalAlign: 'text-bottom', marginRight: 8 }} />
+              Detaillierte Statistiken
+            </button>
+          </div>
+
+          {/* Kalender Card */}
+          <div className="dashboard-card calendar-card">
+            <div className="card-icon"><CalendarDaysIcon style={{ width: 28, height: 28 }} /></div>
+            <h3>Kalender</h3>
+            <div style={{ marginTop: '1rem' }}>
+              <div style={{
+                padding: '1rem',
+                background: 'rgba(255,255,255,0.05)',
+                borderRadius: '8px',
+                border: '1px solid rgba(255,255,255,0.1)',
+                textAlign: 'center'
+              }}>
+                <div style={{ fontSize: '0.85rem', opacity: 0.8, marginBottom: '0.5rem' }}>Heute fällig</div>
+                <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>
+                  {myTasks.filter(t => isDueNow(t)).length}
+                </div>
+                <div style={{ fontSize: '0.85rem', opacity: 0.7, marginTop: '0.25rem' }}>Aufgaben</div>
+              </div>
+              <div style={{
+                marginTop: '0.75rem',
+                padding: '0.75rem',
+                background: 'rgba(255,255,255,0.05)',
+                borderRadius: '8px',
+                textAlign: 'center',
+                fontSize: '0.9rem',
+                opacity: 0.8
+              }}>
+                📅 Termine & Fälligkeiten im Kalender ansehen
+              </div>
+            </div>
+            <button className="card-action-btn secondary" onClick={() => navigate('/calendar')} style={{ marginTop: '1rem' }}>
+              <CalendarDaysIcon style={{ width: 18, height: 18, verticalAlign: 'text-bottom', marginRight: 8 }} />
+              Zum Kalender
+            </button>
           </div>
 
           {/* Achievements Card */}

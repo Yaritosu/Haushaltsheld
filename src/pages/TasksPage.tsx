@@ -134,13 +134,25 @@ import { useHousehold } from '../context/HouseholdContext'
                      const due = isDueNow(t)
                      return (
                        <div key={t.id} className="task-item" style={{ opacity: done ? 0.7 : 1, flexWrap: 'wrap' }}>
-                         <input type="checkbox" id={t.id} checked={done} disabled={!due} onChange={() => toggleDone(t.id)} />
-                         <label htmlFor={t.id} style={{ flex: 1, minWidth: 200 }}>
+                         <div style={{ flex: 1, minWidth: 200 }}>
                            <div className="task-title" style={{ textDecoration: done ? 'line-through' : 'none' }}>{t.title}</div>
                            <div className="task-meta muted">{t.points} P · {RECURRENCE_LABEL[t.recurrence]} {t.assignee ? `· ${t.assignee === currentUserId ? 'Du' : 'Mitglied'}` : ''} {due ? '' : '· (nicht fällig)'}
                            </div>
-                         </label>
+                         </div>
                          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                           <button 
+                             className="task-check-btn" 
+                             onClick={() => toggleDone(t.id)} 
+                             disabled={!due}
+                             title={done ? 'Als unerledigt markieren' : 'Als erledigt markieren'}
+                             style={{
+                               background: done ? 'rgba(107, 231, 107, 0.3)' : 'rgba(255,255,255,0.15)',
+                               opacity: due ? 1 : 0.4,
+                               cursor: due ? 'pointer' : 'not-allowed'
+                             }}
+                           >
+                             <CheckIcon style={{ width: 16, height: 16 }} />
+                           </button>
                            {(t.recurrence === 'einmalig' || t.recurrence === 'sonder') && (
                              <button className="task-check-btn" onClick={() => handleComplete(t.id)} title="Als abgeschlossen markieren (löschen)">
                                <CheckIcon style={{ width: 16, height: 16 }} />

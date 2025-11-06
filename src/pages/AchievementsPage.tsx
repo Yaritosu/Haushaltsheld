@@ -88,8 +88,8 @@ export default function AchievementsPage({ onLogout }: AchievementsPageProps) {
           </h2>
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-            gap: '1rem'
+            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+            gap: '0.75rem'
           }}>
             {achievements.map(ach => {
               const unlocked = isUnlocked(ach.id)
@@ -100,50 +100,56 @@ export default function AchievementsPage({ onLogout }: AchievementsPageProps) {
               return (
                 <div
                   key={ach.id}
+                  className="dashboard-card"
                   style={{
                     background: unlocked
-                      ? 'linear-gradient(135deg, rgba(255, 215, 0, 0.25), rgba(184, 134, 11, 0.25))'
+                      ? 'linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(184, 134, 11, 0.2))'
                       : 'rgba(255,255,255,0.05)',
                     backdropFilter: 'blur(12px)',
                     border: unlocked
-                      ? '2px solid rgba(255, 215, 0, 0.6)'
+                      ? '2px solid rgba(255, 215, 0, 0.5)'
                       : '1px solid rgba(255,255,255,0.15)',
                     borderRadius: '12px',
-                    padding: '1.25rem',
+                    padding: '1rem',
                     position: 'relative',
                     transition: 'all 0.3s ease',
                     opacity: unlocked ? 1 : 0.6,
-                    cursor: 'default'
+                    cursor: 'default',
+                    minHeight: 'auto'
                   }}
                 >
                   {/* Icon */}
                   <div style={{
-                    width: '60px',
-                    height: '60px',
+                    width: '48px',
+                    height: '48px',
                     background: unlocked ? 'rgba(255, 215, 0, 0.3)' : 'rgba(255,255,255,0.1)',
                     borderRadius: '50%',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    marginBottom: '0.75rem'
+                    marginBottom: '0.5rem',
+                    margin: '0 auto 0.5rem'
                   }}>
-                    <IconComp style={{ width: '32px', height: '32px', color: unlocked ? '#FFD700' : 'white' }} />
+                    <IconComp style={{ width: '24px', height: '24px', color: unlocked ? '#FFD700' : 'white' }} />
                   </div>
 
                   {/* Title */}
                   <h3 style={{
-                    fontSize: '1.1rem',
+                    fontSize: '0.95rem',
                     fontWeight: 'bold',
-                    marginBottom: '0.5rem'
+                    marginBottom: '0.35rem',
+                    textAlign: 'center'
                   }}>
                     {ach.title}
                   </h3>
 
                   {/* Description */}
                   <p style={{
-                    fontSize: '0.9rem',
+                    fontSize: '0.8rem',
                     opacity: 0.8,
-                    marginBottom: '0.75rem'
+                    marginBottom: '0.5rem',
+                    textAlign: 'center',
+                    minHeight: '2.4rem'
                   }}>
                     {ach.description}
                   </p>
@@ -153,8 +159,8 @@ export default function AchievementsPage({ onLogout }: AchievementsPageProps) {
                     <div>
                       <div style={{
                         background: 'rgba(255,255,255,0.1)',
-                        borderRadius: '8px',
-                        height: '8px',
+                        borderRadius: '6px',
+                        height: '6px',
                         overflow: 'hidden',
                         marginBottom: '0.25rem'
                       }}>
@@ -165,7 +171,7 @@ export default function AchievementsPage({ onLogout }: AchievementsPageProps) {
                           transition: 'width 0.3s ease'
                         }} />
                       </div>
-                      <p style={{ fontSize: '0.75rem', opacity: 0.7, textAlign: 'right' }}>
+                      <p style={{ fontSize: '0.7rem', opacity: 0.7, textAlign: 'center' }}>
                         {current} / {target}
                       </p>
                     </div>
@@ -175,16 +181,16 @@ export default function AchievementsPage({ onLogout }: AchievementsPageProps) {
                   {unlocked && (
                     <div style={{
                       position: 'absolute',
-                      top: '0.75rem',
-                      right: '0.75rem',
+                      top: '0.5rem',
+                      right: '0.5rem',
                       background: 'rgba(255, 215, 0, 0.9)',
                       color: '#000',
-                      padding: '0.25rem 0.75rem',
-                      borderRadius: '8px',
-                      fontSize: '0.75rem',
+                      padding: '0.2rem 0.5rem',
+                      borderRadius: '6px',
+                      fontSize: '0.65rem',
                       fontWeight: 'bold'
                     }}>
-                      ✓ Freigeschaltet
+                      ✓
                     </div>
                   )}
                 </div>
