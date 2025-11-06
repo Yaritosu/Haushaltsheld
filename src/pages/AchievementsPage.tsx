@@ -128,9 +128,11 @@ export default function AchievementsPage({ onLogout }: AchievementsPageProps) {
                     alignItems: 'center',
                     justifyContent: 'center',
                     marginBottom: '0.5rem',
-                    margin: '0 auto 0.5rem'
+                    margin: '0 auto 0.5rem',
+                    color: unlocked ? '#FFD700' : 'white',
+                    fontSize: '24px'
                   }}>
-                    <IconComp style={{ width: '24px', height: '24px', color: unlocked ? '#FFD700' : 'white' }} />
+                    <IconComp className="w-6 h-6" />
                   </div>
 
                   {/* Title */}
