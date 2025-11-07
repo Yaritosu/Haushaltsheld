@@ -34,6 +34,17 @@ export type Task = {
 const LS_TASKS_KEY = 'hh_tasks_v2'
 const LS_USER_KEY = 'hh_user_id'
 const LS_LOG_KEY = 'hh_task_log_v1'
+const LS_REGISTRATION_KEY = 'hh_registration_date'
+
+function getRegistrationDate(): number {
+  try {
+    const raw = localStorage.getItem(LS_REGISTRATION_KEY)
+    if (raw) return parseInt(raw, 10)
+  } catch {}
+  const now = Date.now()
+  try { localStorage.setItem(LS_REGISTRATION_KEY, String(now)) } catch {}
+  return now
+}
 
 function getLocalUserId(): string {
   const existing = localStorage.getItem(LS_USER_KEY)
@@ -117,6 +128,7 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
     } catch {}
     return []
   })
+  const [registrationDate] = useState<number>(getRegistrationDate())
 
   useEffect(() => {
     localStorage.setItem(LS_LOG_KEY, JSON.stringify(completions))
@@ -330,8 +342,12 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
     ])
   }
 
-  const getEarned = (userId = currentUserId) => completions.filter(c => c.userId === userId && c.delta > 0).reduce((s,c) => s + c.points, 0)
-  const getSpent  = (userId = currentUserId) => completions.filter(c => c.userId === userId && c.delta < 0).reduce((s,c) => s + c.points, 0)
+  const getEarned = (userId = currentUserId) => completions
+    .filter(c => c.userId === userId && c.ts >= registrationDate && c.delta > 0)
+    .reduce((s,c) => s + c.points, 0)
+  const getSpent  = (userId = currentUserId) => completions
+    .filter(c => c.userId === userId && c.ts >= registrationDate && c.delta < 0)
+    .reduce((s,c) => s + c.points, 0)
   const getBalance = (userId = currentUserId) => getEarned(userId) - getSpent(userId)
   const clearAll = () => setTasks([])
   const resetAllData = () => {

@@ -1,6 +1,6 @@
 import AppShell from '../components/AppShell';
 import { ChartPieIcon, CheckCircleIcon, TrophyIcon, CalendarDaysIcon, ClipboardDocumentCheckIcon, SparklesIcon } from '@heroicons/react/24/outline';
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useTasks } from '../context/TasksContext'
 import { useHousehold } from '../context/HouseholdContext'
 import { useWishlist } from '../context/WishlistContext'
@@ -28,34 +28,40 @@ export default function StatsPage({ onLogout }: Props) {
   const { items: wishlistItems } = useWishlist()
   const { unlocked } = useAchievements()
   const labels = useMemo(() => lastNMonthsLabels(6), [])
+  // Registration cutoff so alte Daten (vor Reset) nicht mitgezählt werden
+  const [registrationDate] = useState<number>(() => {
+    const raw = localStorage.getItem('hh_registration_date')
+    return raw ? parseInt(raw, 10) : Date.now()
+  })
+  const recentCompletions = useMemo(() => completions.filter(c => c.ts >= registrationDate), [completions, registrationDate])
 
   const byMonth = useMemo(() => {
     const map: Record<string, number> = {}
     for (const l of labels) map[l] = 0
-    for (const c of completions) {
+    for (const c of recentCompletions) {
       if (c.delta < 0) continue // count only positive completions
       const d = new Date(c.ts)
       const key = monthKey(d)
       if (map[key] !== undefined) map[key] += c.points
     }
     return map
-  }, [completions, labels])
+  }, [recentCompletions, labels])
 
   const leaderboard = useMemo(() => {
     const map: Record<string, number> = {}
-    for (const c of completions) {
+    for (const c of recentCompletions) {
       if (c.delta < 0) continue
       map[c.userId] = (map[c.userId] || 0) + c.points
     }
     const items = Object.entries(map).map(([userId, pts]) => ({ userId, pts }))
     items.sort((a,b) => b.pts - a.pts)
     return items
-  }, [completions])
+  }, [recentCompletions])
 
   // Aufgabenhäufigkeit (nur task completions)
   const taskCompletionCount = useMemo(() => {
     const map: Record<string, number> = {}
-    for (const c of completions) {
+    for (const c of recentCompletions) {
       if (c.delta > 0 && c.taskId.startsWith('t')) {
         map[c.taskId] = (map[c.taskId] || 0) + 1
       }
@@ -66,16 +72,16 @@ export default function StatsPage({ onLogout }: Props) {
     })
     list.sort((a,b) => b.count - a.count)
     return list.slice(0, 5)
-  }, [completions, tasks])
+  }, [recentCompletions, tasks])
 
   // Erledigte Aufgaben (unique tasks)
   const uniqueTasksCompleted = useMemo(() => {
     const set = new Set<string>()
-    for (const c of completions) {
+    for (const c of recentCompletions) {
       if (c.delta > 0 && c.taskId.startsWith('t')) set.add(c.taskId)
     }
     return set.size
-  }, [completions])
+  }, [recentCompletions])
 
   // Eingelöste Wünsche
   const redeemedWishes = useMemo(() => wishlistItems.filter(w => w.status === 'redeemed'), [wishlistItems])
@@ -83,14 +89,14 @@ export default function StatsPage({ onLogout }: Props) {
   // Achievement Bonus Points
   const achievementBonusPoints = useMemo(() => {
     let total = 0
-    for (const c of completions) {
+    for (const c of recentCompletions) {
       // Achievement rewards are recorded as adjustments with prefix adjust:achievement:
       if (c.taskId.startsWith('adjust:achievement:')) {
         total += c.points
       }
     }
     return total
-  }, [completions])
+  }, [recentCompletions])
 
   const maxVal = Math.max(1, ...Object.values(byMonth))
   const chartWidth = 520, chartHeight = 180, barGap = 12

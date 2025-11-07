@@ -58,18 +58,20 @@ export function AchievementsProvider({ children }: { children: ReactNode }) {
   const getProgress = (achievement: Achievement): { current: number; target: number } => {
     const { type, target, taskId } = achievement.requirement
     let current = 0
+    // Consider only my completions since (re)set registration date
+    const myAllCompletions = completions.filter(c => c.userId === currentUserId && c.ts >= registrationDate)
 
     switch (type) {
       case 'tasks_completed':
-        current = completions
-          .filter(c => c.userId === currentUserId && c.delta > 0)
+        current = myAllCompletions
+          .filter(c => c.delta > 0)
           .filter(c => !(c.taskId.startsWith('bonus:') || c.taskId.startsWith('adjust:') || c.taskId.startsWith('transfer:')))
           .length
         break
       case 'points_earned': {
         // Count only real task points, exclude bonuses/adjustments/transfers
-        const earnedFromTasks = completions
-          .filter(c => c.userId === currentUserId && c.delta > 0)
+        const earnedFromTasks = myAllCompletions
+          .filter(c => c.delta > 0)
           .filter(c => c.taskId.startsWith('t'))
           .reduce((sum, c) => sum + c.points, 0)
         current = earnedFromTasks
@@ -77,8 +79,8 @@ export function AchievementsProvider({ children }: { children: ReactNode }) {
       }
       case 'task_streak': {
         // Calculate longest streak of consecutive days with real task completions
-        const dates = completions
-          .filter(c => c.userId === currentUserId && c.delta > 0)
+        const dates = myAllCompletions
+          .filter(c => c.delta > 0)
           .filter(c => !(c.taskId.startsWith('bonus:') || c.taskId.startsWith('adjust:') || c.taskId.startsWith('transfer:')))
           .map(c => new Date(c.ts).toDateString())
         const uniqueDates = Array.from(new Set(dates)).sort()
@@ -108,8 +110,8 @@ export function AchievementsProvider({ children }: { children: ReactNode }) {
       case 'single_task_count': {
         // Count completions for a single REAL task (any task, find max)
         const taskCounts = new Map<string, number>()
-        completions
-          .filter(c => c.userId === currentUserId && c.delta > 0)
+        myAllCompletions
+          .filter(c => c.delta > 0)
           .filter(c => !(c.taskId.startsWith('bonus:') || c.taskId.startsWith('adjust:') || c.taskId.startsWith('transfer:')))
           .forEach(c => {
             taskCounts.set(c.taskId, (taskCounts.get(c.taskId) || 0) + 1)
@@ -123,14 +125,14 @@ export function AchievementsProvider({ children }: { children: ReactNode }) {
       }
       case 'points_transferred': {
         // Sum of points the user has transferred away
-        current = completions
-          .filter(c => c.userId === currentUserId && c.delta < 0 && c.taskId.startsWith('transfer:from'))
+        current = myAllCompletions
+          .filter(c => c.delta < 0 && c.taskId.startsWith('transfer:from'))
           .reduce((sum, c) => sum + c.points, 0)
         break
       }
       case 'special': {
         // Custom logic based on achievement ID
-        const myCompletions = completions.filter(c => c.userId === currentUserId && c.delta > 0 && c.taskId.startsWith('t'))
+        const myCompletions = myAllCompletions.filter(c => c.delta > 0 && c.taskId.startsWith('t'))
         
         // Time-based achievements
         if (achievement.id === 'special_early_bird') {
@@ -249,8 +251,8 @@ export function AchievementsProvider({ children }: { children: ReactNode }) {
         // Level-based (based on earned points)
         else if (achievement.id.startsWith('level_')) {
           // Level counts only real task-earned points
-          const earnedFromTasks = completions
-            .filter(c => c.userId === currentUserId && c.delta > 0 && c.taskId.startsWith('t'))
+          const earnedFromTasks = myAllCompletions
+            .filter(c => c.delta > 0 && c.taskId.startsWith('t'))
             .reduce((sum, c) => sum + c.points, 0)
           const level = Math.floor(earnedFromTasks / 100) // 100 task-points = 1 level
           current = level
@@ -259,22 +261,22 @@ export function AchievementsProvider({ children }: { children: ReactNode }) {
         // Points milestones
         else if (achievement.id === 'fun_1') { // Glückspilz - genau 777 Punkte
           // Balance based on all completions (but if you prefer task-only, adjust similarly)
-          const balance = getEarned(currentUserId) - completions.filter(c => c.userId === currentUserId && c.delta < 0).reduce((s, c) => s + c.points, 0)
+          const balance = getEarned(currentUserId) - myAllCompletions.filter(c => c.delta < 0).reduce((s, c) => s + c.points, 0)
           current = balance === 777 ? 777 : 0
         } else if (achievement.id === 'fun_3') { // Sparsam - 1000 Punkte ohne ausgeben
-          const spent = completions.filter(c => c.userId === currentUserId && c.delta < 0).reduce((s, c) => s + c.points, 0)
+          const spent = myAllCompletions.filter(c => c.delta < 0).reduce((s, c) => s + c.points, 0)
           const balance = getEarned(currentUserId) - spent
           current = spent === 0 && balance >= 1000 ? 1000 : 0
         } else if (achievement.id === 'fun_4') { // Verschwender - 1000 Punkte ausgegeben
-          const spent = completions.filter(c => c.userId === currentUserId && c.delta < 0 && c.taskId.startsWith('adjust:redeem')).reduce((s, c) => s + c.points, 0)
+          const spent = myAllCompletions.filter(c => c.delta < 0 && c.taskId.startsWith('adjust:redeem')).reduce((s, c) => s + c.points, 0)
           current = spent
         }
         
         // Community achievements
         else if (achievement.id === 'creative_10') { // Sozial - 5 verschiedenen Mitgliedern Punkte geschenkt
           const recipients = new Set(
-            completions
-              .filter(c => c.userId === currentUserId && c.taskId.startsWith('transfer:to'))
+            myAllCompletions
+              .filter(c => c.taskId.startsWith('transfer:to'))
               .map(c => c.taskId.split(':')[2])
           )
           current = recipients.size
