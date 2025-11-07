@@ -57,7 +57,8 @@ export default function MembersPage({ onLogout }: Props) {
 
   const copyInviteLink = () => {
     if (!household?.invite_code) return
-    const link = `${window.location.origin}/invite/${household.invite_code}`
+    const baseUrl = import.meta.env.VITE_SITE_URL || window.location.origin
+    const link = `${baseUrl}/invite/${household.invite_code}`
     navigator.clipboard.writeText(link).then(() => {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)

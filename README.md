@@ -23,7 +23,7 @@ Open http://localhost:3000.
 ```bash
 VITE_SUPABASE_URL=your-project-url
 VITE_SUPABASE_ANON_KEY=your-anon-key
-VITE_SITE_URL=https://your-app.vercel.app   # optional but recommended for password reset links
+VITE_SITE_URL=https://haushaltsheld.vercel.app   # WICHTIG: Produktions-URL für Einladungslinks!
 ```
 
 ### 2. Initialize database
@@ -83,6 +83,7 @@ npx vercel link
 # 3) Add environment variables (add for Production and Preview)
 npx vercel env add VITE_SUPABASE_URL
 npx vercel env add VITE_SUPABASE_ANON_KEY
+npx vercel env add VITE_SITE_URL   # z.B. https://haushaltsheld.vercel.app
 
 # 4) Deploy
 npx vercel --prod

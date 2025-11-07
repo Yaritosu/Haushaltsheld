@@ -442,7 +442,9 @@ export default function Dashboard({ onLogout }: Props) {
             <button 
               onClick={() => {
                 if (household?.invite_code) {
-                  const link = `${window.location.origin}/invite/${household.invite_code}`
+                  // Nutze SITE_URL aus env oder fallback auf window.location.origin
+                  const baseUrl = import.meta.env.VITE_SITE_URL || window.location.origin
+                  const link = `${baseUrl}/invite/${household.invite_code}`
                   navigator.clipboard.writeText(link).then(() => {
                     setInviteLinkCopied(true)
                     setTimeout(() => setInviteLinkCopied(false), 2000)

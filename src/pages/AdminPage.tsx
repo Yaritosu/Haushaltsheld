@@ -46,16 +46,17 @@ export default function AdminPage({ onLogout }: Props) {
       return
     }
 
-    // Reset alle LocalStorage Keys
+    // Reset ALLE LocalStorage Keys (inkl. Einkaufsliste, Punktestand, Achievements)
     const keysToReset = [
-      'hh_tasks_v2',
-      'hh_task_log_v1',
-      'hh_wishlist_v1',
-      'hh_calendar_events_v1',
-      'hh_recipes_v1',
-      'hh_mealplan_v1',
-      'hh_achievements_v1',
-      'hh_registration_date'
+      'hh_tasks_v2',              // Aufgaben
+      'hh_task_log_v1',           // Punktestand & Statistiken
+      'hh_wishlist_v1',           // Wunschliste
+      'hh_calendar_events_v1',    // Kalender
+      'hh_recipes_v1',            // Rezepte
+      'hh_mealplan_v1',           // Essensplan
+      'hh_achievements_v1',       // Auszeichnungen
+      'hh_registration_date',     // Registrierungsdatum
+      'hh_shopping_list_v1'       // Einkaufsliste
     ]
 
     keysToReset.forEach(key => {
