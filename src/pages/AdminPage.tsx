@@ -3,11 +3,12 @@ import { Cog6ToothIcon, PlusIcon, TrashIcon, PencilIcon, ExclamationTriangleIcon
 import { useState } from 'react'
 import { useHousehold } from '../context/HouseholdContext'
 import { ALL_AREAS, type Area } from '../context/TasksContext'
+import { supabase, SUPABASE_CONFIGURED } from '../lib/supabaseClient'
 
 type Props = { onLogout: () => void };
 
 export default function AdminPage({ onLogout }: Props) {
-  const { membership } = useHousehold()
+  const { household, membership } = useHousehold()
   const [areas, setAreas] = useState<string[]>([...ALL_AREAS])
   const [newArea, setNewArea] = useState('')
   const [editingIdx, setEditingIdx] = useState<number | null>(null)
@@ -40,13 +41,43 @@ export default function AdminPage({ onLogout }: Props) {
     setEditValue('')
   }
 
-  const handleReset = () => {
+  const handleReset = async () => {
     if (resetConfirmation !== 'RESET') {
       alert('Bitte gib genau "RESET" ein, um fortzufahren.')
       return
     }
 
-    // Reset ALLE LocalStorage Keys (inkl. Einkaufsliste, Punktestand, Achievements)
+    // 1. Versuche zuerst einen vollständigen Remote-Purge (Supabase Tabellen), damit
+    //    Echtzeit-Sync nicht alte Punkte / Aufgaben sofort wieder einspielt.
+    if (SUPABASE_CONFIGURED && supabase && membership?.role === 'admin') {
+      if (household?.id) {
+        // Wir löschen nur was wahrscheinlich existiert; Fehler werden geloggt aber nicht blockierend
+        const tablesToClear = [
+          { name: 'task_log', householdField: 'household_id' },
+          { name: 'tasks', householdField: 'household_id' },
+          { name: 'wishlist', householdField: 'household_id' }
+          // Weitere Tabellen wie calendar / recipes könnten ergänzt werden wenn serverseitig vorhanden
+        ]
+        for (const tbl of tablesToClear) {
+          try {
+            const { error } = await supabase
+              .from(tbl.name)
+              .delete()
+              .eq(tbl.householdField, household.id)
+            if (error) console.warn(`Fehler beim Löschen aus ${tbl.name}:`, error.message)
+            else console.log(`Tabelle ${tbl.name} für Haushalt ${household.id} geleert.`)
+          } catch (e) {
+            console.warn(`Exception beim Löschen aus ${tbl.name}:`, e)
+          }
+        }
+      } else {
+        console.warn('Keine household.id verfügbar – Remote-Purge übersprungen.')
+      }
+    } else {
+      console.log('Supabase nicht konfiguriert oder kein Admin – nur lokaler Reset.')
+    }
+
+    // 2. Reset ALLE LocalStorage Keys (inkl. Einkaufsliste, Punktestand, Achievements)
     const keysToReset = [
       'hh_tasks_v2',              // Aufgaben
       'hh_task_log_v1',           // Punktestand & Statistiken
@@ -56,7 +87,8 @@ export default function AdminPage({ onLogout }: Props) {
       'hh_mealplan_v1',           // Essensplan
       'hh_achievements_v1',       // Auszeichnungen
       'hh_registration_date',     // Registrierungsdatum
-      'hh_shopping_list_v1'       // Einkaufsliste
+      'hh_shopping_list_v1',      // Einkaufsliste
+      'hh_user_id'                // Lokale User-ID (damit Punktelogik komplett neu startet)
     ]
 
     keysToReset.forEach(key => {
