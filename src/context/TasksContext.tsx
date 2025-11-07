@@ -72,6 +72,7 @@ interface TasksContextType {
   getEarned: (userId?: string) => number
   getSpent: (userId?: string) => number
   clearAll: () => void
+  resetAllData: () => void
 }
 
 const TasksContext = createContext<TasksContextType | undefined>(undefined)
@@ -333,7 +334,18 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
   const getSpent  = (userId = currentUserId) => completions.filter(c => c.userId === userId && c.delta < 0).reduce((s,c) => s + c.points, 0)
   const getBalance = (userId = currentUserId) => getEarned(userId) - getSpent(userId)
   const clearAll = () => setTasks([])
+  const resetAllData = () => {
+    setTasks([])
+    setCompletions([])
+    try {
+      localStorage.removeItem(LS_TASKS_KEY)
+      localStorage.removeItem(LS_LOG_KEY)
+      // Broadcast to other tabs so they also clear
+      window.dispatchEvent(new StorageEvent('storage', { key: LS_TASKS_KEY, newValue: JSON.stringify([]) }))
+      window.dispatchEvent(new StorageEvent('storage', { key: LS_LOG_KEY, newValue: JSON.stringify([]) }))
+    } catch {}
+  }
 
-  const value: TasksContextType = { tasks, setTasks, currentUserId, myTasks, addTask, assignToMe, unassign, toggleDone, isDoneForNow, isDueNow, completions, addBonus, addAdjustment, transferPoints, getBalance, getEarned, getSpent, clearAll }
+  const value: TasksContextType = { tasks, setTasks, currentUserId, myTasks, addTask, assignToMe, unassign, toggleDone, isDoneForNow, isDueNow, completions, addBonus, addAdjustment, transferPoints, getBalance, getEarned, getSpent, clearAll, resetAllData }
   return <TasksContext.Provider value={value}>{children}</TasksContext.Provider>
 }

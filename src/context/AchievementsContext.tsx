@@ -66,9 +66,15 @@ export function AchievementsProvider({ children }: { children: ReactNode }) {
           .filter(c => !(c.taskId.startsWith('bonus:') || c.taskId.startsWith('adjust:') || c.taskId.startsWith('transfer:')))
           .length
         break
-      case 'points_earned':
-        current = getEarned(currentUserId)
+      case 'points_earned': {
+        // Count only real task points, exclude bonuses/adjustments/transfers
+        const earnedFromTasks = completions
+          .filter(c => c.userId === currentUserId && c.delta > 0)
+          .filter(c => c.taskId.startsWith('t'))
+          .reduce((sum, c) => sum + c.points, 0)
+        current = earnedFromTasks
         break
+      }
       case 'task_streak': {
         // Calculate longest streak of consecutive days with real task completions
         const dates = completions
@@ -242,12 +248,17 @@ export function AchievementsProvider({ children }: { children: ReactNode }) {
         
         // Level-based (based on earned points)
         else if (achievement.id.startsWith('level_')) {
-          const level = Math.floor(getEarned(currentUserId) / 100) // 100 points = 1 level
+          // Level counts only real task-earned points
+          const earnedFromTasks = completions
+            .filter(c => c.userId === currentUserId && c.delta > 0 && c.taskId.startsWith('t'))
+            .reduce((sum, c) => sum + c.points, 0)
+          const level = Math.floor(earnedFromTasks / 100) // 100 task-points = 1 level
           current = level
         }
         
         // Points milestones
         else if (achievement.id === 'fun_1') { // Glückspilz - genau 777 Punkte
+          // Balance based on all completions (but if you prefer task-only, adjust similarly)
           const balance = getEarned(currentUserId) - completions.filter(c => c.userId === currentUserId && c.delta < 0).reduce((s, c) => s + c.points, 0)
           current = balance === 777 ? 777 : 0
         } else if (achievement.id === 'fun_3') { // Sparsam - 1000 Punkte ohne ausgeben

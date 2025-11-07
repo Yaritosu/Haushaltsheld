@@ -84,7 +84,8 @@ export default function StatsPage({ onLogout }: Props) {
   const achievementBonusPoints = useMemo(() => {
     let total = 0
     for (const c of completions) {
-      if (c.taskId.startsWith('achievement:')) {
+      // Achievement rewards are recorded as adjustments with prefix adjust:achievement:
+      if (c.taskId.startsWith('adjust:achievement:')) {
         total += c.points
       }
     }
