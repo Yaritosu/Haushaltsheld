@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react'
 import { supabase, SUPABASE_CONFIGURED } from '../lib/supabaseClient'
 import type { Household, HouseholdMember } from '../types/household'
 
@@ -25,6 +25,30 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
   const [membership, setMembership] = useState<HouseholdMember | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const refreshTimer = useRef<number | null>(null)
+
+  const scheduleTokenRefresh = async () => {
+    if (!SUPABASE_CONFIGURED || !supabase) return
+    try {
+      const sessionResp = await supabase.auth.getSession()
+      const expSec = sessionResp.data.session?.expires_at
+      if (!expSec) return
+      const msUntilExpiry = expSec * 1000 - Date.now()
+      const msUntilRefresh = Math.max(15_000, msUntilExpiry - 60_000) // 1 Minute vor Ablauf
+      if (refreshTimer.current) window.clearTimeout(refreshTimer.current)
+      refreshTimer.current = window.setTimeout(async () => {
+        try {
+          await supabase!.auth.refreshSession()
+        } catch (e) {
+          console.warn('Session refresh failed', e)
+        } finally {
+          scheduleTokenRefresh() // erneut planen
+        }
+      }, msUntilRefresh)
+    } catch (e) {
+      console.warn('scheduleTokenRefresh failed', e)
+    }
+  }
 
   const fetchHousehold = async () => {
     setError(null)
@@ -34,8 +58,23 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
       return
     }
 
+    const withRetry = async <T,>(fn: () => Promise<T>, attempts = 2): Promise<T> => {
+      try {
+        return await fn()
+      } catch (err: any) {
+        if (attempts <= 0) throw err
+        const msg = String(err?.message || err)
+        // Bei abgelaufenen Tokens einmal refreshen und wiederholen
+        if (msg.includes('JWT') || msg.includes('token') || msg.includes('expired')) {
+          try { await supabase!.auth.refreshSession() } catch {}
+        }
+        await new Promise(res => setTimeout(res, 300 * (3 - attempts)))
+        return withRetry(fn, attempts - 1)
+      }
+    }
+
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser()
+      const { data: { user }, error: userError } = await withRetry(() => supabase!.auth.getUser() as unknown as Promise<any>)
       if (userError) {
         console.error('Auth error:', userError)
         setError('Authentifizierungsfehler')
@@ -52,7 +91,7 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
       }
 
       // Try to get household in one RPC call (more robust under RLS)
-      const { data: rpcData, error: rpcError } = await supabase.rpc('get_my_household')
+      const { data: rpcData, error: rpcError } = await withRetry(() => supabase!.rpc('get_my_household') as unknown as Promise<any>)
 
       if (!rpcError && rpcData) {
         if (rpcData.length > 0) {
@@ -65,11 +104,11 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
       }
 
       // Fallback: separate selects
-      const { data: memberData, error: memberError } = await supabase
+      const { data: memberData, error: memberError } = await withRetry(() => (supabase!
         .from('household_members')
         .select('*')
         .eq('user_id', user.id)
-        .single()
+        .single()) as unknown as Promise<any>)
 
       if (memberError || !memberData) {
         setHousehold(null)
@@ -80,11 +119,11 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
 
       setMembership(memberData)
 
-      const { data: householdData, error: householdError } = await supabase
+      const { data: householdData, error: householdError } = await withRetry(() => (supabase!
         .from('households')
         .select('*')
         .eq('id', memberData.household_id)
-        .single()
+        .single()) as unknown as Promise<any>)
 
       if (householdError || !householdData) {
         setHousehold(null)
@@ -105,6 +144,16 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     fetchHousehold()
+    scheduleTokenRefresh()
+    if (!SUPABASE_CONFIGURED || !supabase) return
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, _session) => {
+      // bei Session-Änderungen Timer neu planen
+      scheduleTokenRefresh()
+    })
+    return () => {
+      if (refreshTimer.current) window.clearTimeout(refreshTimer.current)
+      sub?.subscription?.unsubscribe()
+    }
   }, [])
 
   // Realtime updates für Household Changes (optional)

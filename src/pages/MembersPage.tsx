@@ -1,6 +1,6 @@
 import AppShell from '../components/AppShell';
 import { UsersIcon, PaperAirplaneIcon, BanknotesIcon, LinkIcon, ClipboardDocumentIcon, CheckIcon } from '@heroicons/react/24/outline';
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useHousehold } from '../context/HouseholdContext'
 import { SUPABASE_CONFIGURED, supabase } from '../lib/supabaseClient'
 import { useTasks } from '../context/TasksContext'
@@ -9,18 +9,41 @@ type Props = { onLogout: () => void };
 
 export default function MembersPage({ onLogout }: Props) {
   const { household, membership } = useHousehold()
-  const { currentUserId, transferPoints, addAdjustment, getBalance } = useTasks()
+  const { currentUserId, transferPoints, addAdjustment, completions } = useTasks()
   const [members, setMembers] = useState<Array<{ id: string; role: string; email?: string | null; name?: string | null }>>([])
   const [loading, setLoading] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [pageSize, setPageSize] = useState(30)
   const isAdmin = membership?.role === 'admin'
+
+  // Memoized balances computed in one pass over completions (faster for viele Mitglieder)
+  const balancesByUser = useMemo(() => {
+    const regRaw = localStorage.getItem('hh_registration_date')
+    const cutoff = regRaw ? parseInt(regRaw, 10) : 0
+    const earned: Record<string, number> = {}
+    const spent: Record<string, number> = {}
+    for (const c of completions) {
+      if (c.ts < cutoff) continue
+      if (c.delta > 0) {
+        earned[c.userId] = (earned[c.userId] || 0) + c.points
+      } else if (c.delta < 0) {
+        spent[c.userId] = (spent[c.userId] || 0) + c.points
+      }
+    }
+    const map: Record<string, number> = {}
+    const userIds = new Set<string>([...members.map(m => m.id)])
+    for (const uid of userIds) {
+      map[uid] = (earned[uid] || 0) - (spent[uid] || 0)
+    }
+    return map
+  }, [completions, members])
 
   const handleTransfer = (toUserId: string) => {
     const amount = prompt('Wie viele Punkte senden?')
     if (!amount) return
     const pts = parseInt(amount, 10)
     if (isNaN(pts) || pts <= 0) { alert('Ungültige Punktzahl'); return }
-    const balance = getBalance(currentUserId)
+    const balance = balancesByUser[currentUserId] ?? 0
     if (pts > balance) { alert('Nicht genug Punkte'); return }
     transferPoints(currentUserId, toUserId, pts, 'transfer')
     alert(`${pts} Punkte gesendet!`)
@@ -162,11 +185,11 @@ export default function MembersPage({ onLogout }: Props) {
           {SUPABASE_CONFIGURED && (
             <div style={{ marginTop: '1rem' }}>
               <div className="task-list">
-                {members.map(m => (
+                {members.slice(0, pageSize).map(m => (
                   <div key={m.id} className="task-item">
                     <div>
                       <div className="task-title">{m.name || m.email || m.id.slice(0,8)}</div>
-                      <div className="task-meta muted">Kontostand: {getBalance(m.id)} P</div>
+                      <div className="task-meta muted">Kontostand: {balancesByUser[m.id] ?? 0} P</div>
                     </div>
                     <div className="muted" style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
                       <button className="nav-btn" onClick={() => {
@@ -188,6 +211,11 @@ export default function MembersPage({ onLogout }: Props) {
                     </div>
                   </div>
                 ))}
+                {members.length > pageSize && (
+                  <div style={{ textAlign: 'center', marginTop: '0.5rem' }}>
+                    <button className="nav-btn" onClick={() => setPageSize(ps => ps + 30)}>Mehr laden… ({pageSize}/{members.length})</button>
+                  </div>
+                )}
                 {!loading && members.length === 0 && (
                   <div className="task-item"><div className="muted">Keine Mitglieder gefunden</div></div>
                 )}
