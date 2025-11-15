@@ -7,6 +7,7 @@
 ### ✅ Was ich über das Projekt weiß:
 
 **Technische Basis:**
+
 - React + TypeScript + Vite SPA
 - Supabase für Auth & Database
 - React Router für Navigation
@@ -14,6 +15,7 @@
 - Multi-Household System
 
 **Hauptfunktionen (bereits implementiert):**
+
 - 🔐 Login/Signup mit Supabase Auth
 - 🏠 Multi-Household System (Erstellen/Beitreten via Einladungscode)
 - ✅ Aufgaben-Management mit Punktesystem
@@ -28,6 +30,7 @@
 - 🎯 Familienaktivitäten (bereits vorhanden aber zu erweitern)
 
 **Datei-Struktur:**
+
 ```
 src/
 ├── App.tsx (Router + Auth Guard)
@@ -40,10 +43,12 @@ src/
 ```
 
 **Navigation (AppShell):**
+
 - Dashboard, Aufgaben, Statistiken, Wunschliste, Einkaufsliste
 - Mitglieder, Kalender, Rezepte, Auszeichnungen, Aktivitäten, Admin
 
 **Database Schema:**
+
 - `profiles` (user profiles)
 - `households` (mit invite_code)
 - `household_members` (user zu household zuordnung)
@@ -55,8 +60,9 @@ src/
 **User Request:** Implementierung von Punkten 2,3,7,9,13,16,18 + Familienaktivitäten Generator
 
 ### Todo Liste:
+
 1. ❌ Implementiere Punkt 2 (unbekannt - muss User fragen)
-2. ❌ Implementiere Punkt 3 (unbekannt - muss User fragen) 
+2. ❌ Implementiere Punkt 3 (unbekannt - muss User fragen)
 3. ❌ Implementiere Punkt 7 (unbekannt - muss User fragen)
 4. ❌ Implementiere Punkt 9 (unbekannt - muss User fragen)
 5. ❌ Implementiere Punkt 13 (unbekannt - muss User fragen)
@@ -73,6 +79,7 @@ src/
 ## 📝 Änderungs-Protokoll
 
 ### 15. November 2025
+
 - **ENTWICKLUNGSLOG ERSTELLT**
 - Vollständige Projektanalyse durchgeführt
 - Bestehende Familienaktivitäten-Datei gefunden: `src/data/familyActivities.ts`
@@ -80,8 +87,9 @@ src/
 - FamilyActivitiesPage bereits in App.tsx registriert
 
 **Nächste Schritte:**
+
 1. Familienaktivitäten-Datenbank auf 200+ erweitern
-2. Spielautomat-Generator UI entwickeln 
+2. Spielautomat-Generator UI entwickeln
 3. Punkte 2,3,7,9,13,16,18 vom User erfragen und implementieren
 
 ---
@@ -91,6 +99,7 @@ src/
 **Zweck:** Automatische Dokumentation aller Code-Änderungen für Chat-Kontinuität
 
 **Bei jeder Datei-Änderung protokollieren:**
+
 - Datum/Zeit
 - Geänderte Datei(en)
 - Art der Änderung
@@ -98,6 +107,7 @@ src/
 - Status (Abgeschlossen/In Progress/Fehler)
 
 **Wichtige Infos für neue Chats:**
+
 - Dieses Log immer zuerst lesen lassen
 - Context.md für Projekt-Übersicht
 - README.md für Setup-Anweisungen
