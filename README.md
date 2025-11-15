@@ -17,9 +17,11 @@ Open http://localhost:3000.
 ## Supabase setup (required for multi-household features)
 
 ### 1. Create Supabase project
+
 1. Go to https://supabase.com and create a new project
 2. Settings → API: copy **Project URL** and **anon public key**
 3. Copy `.env.local.example` to `.env.local` and set:
+
 ```bash
 VITE_SUPABASE_URL=your-project-url
 VITE_SUPABASE_ANON_KEY=your-anon-key
@@ -27,6 +29,7 @@ VITE_SITE_URL=https://haushaltsheld.vercel.app   # WICHTIG: Produktions-URL für
 ```
 
 ### 2. Initialize database
+
 1. Open **SQL Editor** in your Supabase project
 2. Copy the contents of `supabase-schema.sql`
 3. Run the script to create tables, RLS policies, and functions
@@ -34,11 +37,13 @@ VITE_SITE_URL=https://haushaltsheld.vercel.app   # WICHTIG: Produktions-URL für
 See [DATABASE_SETUP.md](./DATABASE_SETUP.md) for detailed instructions.
 
 ### 3. Restart dev server
+
 ```bash
 npm run dev
 ```
 
 ### What changes when configured?
+
 - Login form uses `supabase.auth.signInWithPassword(email, password)`
 - App listens to Supabase auth state and routes to /dashboard when logged in
 - Logout calls `supabase.auth.signOut()`
@@ -48,12 +53,14 @@ If env vars are not set, the app falls back to a mock login (localStorage only).
 ## Features
 
 ### Multi-Household System
+
 - **Create household:** After signup, create a new household and become admin
 - **Join household:** Enter an 8-digit invite code from an admin
 - **Invite codes:** Admins can view and share unique codes in the dashboard
 - **Automatic assignment:** Once joined, users always see their household on login
 
 ### Structure
+
 - `src/App.tsx` — routing + auth guarding + household provider
 - `src/pages/LoginPage.tsx` — login + signup form (Supabase or mock)
 - `src/pages/OnboardingPage.tsx` — household creation/joining after signup
@@ -63,6 +70,7 @@ If env vars are not set, the app falls back to a mock login (localStorage only).
 - `supabase-schema.sql` — database schema (households, profiles, members)
 
 ## Build
+
 ```bash
 npm run build
 npm run preview
@@ -73,6 +81,7 @@ npm run preview
 This repo includes `vercel.json` configured for Vite + React and SPA routing.
 
 ### Option A: Vercel CLI (fastest)
+
 ```bash
 # 1) Login (opens browser)
 npx vercel login
@@ -90,6 +99,7 @@ npx vercel --prod
 ```
 
 ### Option B: GitHub → Vercel
+
 1. Commit + push to GitHub
 2. Import the repo at https://vercel.com/import
 3. In Project Settings → Environment Variables, add:
@@ -98,7 +108,9 @@ npx vercel --prod
 4. Deploy
 
 ### Supabase Auth URLs
+
 If you use Magic Links/OAuth, add your domains in Supabase → Authentication → URL Configuration:
+
 - Local dev: `http://localhost:3000` (and the actual port Vite prints, e.g. 3001)
 - Production: your Vercel URL (e.g. `https://your-app.vercel.app`)
 
