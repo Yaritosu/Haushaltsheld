@@ -428,7 +428,7 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
       prev.map((t) => {
         if (t.id !== taskId) return t;
         const doneBy = { ...(t.doneBy || {}) };
-        if (isDoneForNow(t)) {
+        if (isDoneForNow(t, currentUserId)) {
           // mark as not done for current period
           delete doneBy[currentUserId];
           setCompletions((log) => [
