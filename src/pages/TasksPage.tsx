@@ -25,6 +25,7 @@ export default function TasksPage({ onLogout }: Props) {
     tasks,
     setTasks,
     currentUserId,
+    myActiveTasks,
     addTask,
     assignToMe,
     unassign,
@@ -45,9 +46,9 @@ export default function TasksPage({ onLogout }: Props) {
 
   const filtered = useMemo(() => {
     return view === "me"
-      ? tasks.filter((t) => t.assignee === currentUserId)
-      : tasks;
-  }, [tasks, view, currentUserId]);
+      ? myActiveTasks  // Nur aktive Tasks in "Meine Aufgaben"
+      : tasks;         // Alle Tasks in "Alle Aufgaben" 
+  }, [myActiveTasks, tasks, view]);
 
   const grouped = useMemo(() => {
     const map: Record<string, typeof filtered> = {};

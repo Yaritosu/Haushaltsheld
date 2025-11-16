@@ -115,6 +115,7 @@ interface TasksContextType {
   setTasks: React.Dispatch<React.SetStateAction<Task[]>>;
   currentUserId: string;
   myTasks: Task[];
+  myActiveTasks: Task[];
   addTask: (t: Omit<Task, "id" | "doneBy">) => void;
   assignToMe: (taskId: string) => void;
   unassign: (taskId: string) => void;
@@ -346,8 +347,10 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
     if (!ts) return false;
     const done = new Date(ts);
     const now = new Date(nowDate);
+    
     switch (t.recurrence) {
       case "taeglich": {
+        // Erledigt wenn am selben Tag gemacht
         return (
           done.getFullYear() === now.getFullYear() &&
           done.getMonth() === now.getMonth() &&
@@ -355,29 +358,24 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
         );
       }
       case "woechentlich": {
-        const wd = t.weeklyDay ?? 0;
-        const sameWeek = weekStart(done) === weekStart(now);
-        const isToday = (now.getDay() + 6) % 7 === wd;
-        return sameWeek && isToday;
+        // Erledigt wenn in derselben Woche gemacht (egal an welchem Tag)
+        return weekStart(done) === weekStart(now);
       }
       case "monatlich": {
-        const day = t.monthlyDay ?? 1;
-        const sameMonth =
+        // Erledigt wenn im selben Monat gemacht
+        return (
           done.getFullYear() === now.getFullYear() &&
-          done.getMonth() === now.getMonth();
-        const isToday = now.getDate() === day;
-        return sameMonth && isToday;
+          done.getMonth() === now.getMonth()
+        );
       }
       case "jaehrlich": {
-        const m = (t.yearlyMonth ?? 6) - 1;
-        const d = t.yearlyDay ?? 1;
-        const sameYear = done.getFullYear() === now.getFullYear();
-        const isToday = now.getMonth() === m && now.getDate() === d;
-        return sameYear && isToday;
+        // Erledigt wenn im selben Jahr gemacht
+        return done.getFullYear() === now.getFullYear();
       }
       case "einmalig":
       case "sonder":
       default:
+        // Einmalige Tasks bleiben für immer erledigt
         return true;
     }
   };
@@ -515,6 +513,13 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
       .reduce((s, c) => s + c.points, 0);
   const getBalance = (userId = currentUserId) =>
     getEarned(userId) - getSpent(userId);
+  
+  // Aktive Tasks für Dashboard/Zuweisungen (ausblenden wenn bereits erledigt)
+  const myActiveTasks = useMemo(
+    () => myTasks.filter((t) => !isDoneForNow(t, currentUserId)),
+    [myTasks, currentUserId]
+  );
+
   const clearAll = () => setTasks([]);
   const resetAllData = () => {
     setTasks([]);
@@ -543,6 +548,7 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
     setTasks,
     currentUserId,
     myTasks,
+    myActiveTasks,
     addTask,
     assignToMe,
     unassign,

@@ -34,6 +34,7 @@ export default function Dashboard({ onLogout }: Props) {
   // Punktesystem Anzeige (berechnet aus Aufgaben)
   const {
     myTasks,
+    myActiveTasks,
     currentUserId,
     isDoneForNow,
     isDueNow,
@@ -350,7 +351,7 @@ export default function Dashboard({ onLogout }: Props) {
             </button>
           </div>
           <div className="task-list">
-            {myTasks.slice(0, 4).map((t) => {
+            {myActiveTasks.slice(0, 4).map((t) => {
               const done = isDoneForNow(t, currentUserId);
               const due = isDueNow(t);
               return (
@@ -412,7 +413,7 @@ export default function Dashboard({ onLogout }: Props) {
                 </div>
               );
             })}
-            {myTasks.length === 0 && (
+            {myActiveTasks.length === 0 && (
               <div className="task-item">
                 <div className="task-title">Keine Aufgaben zugewiesen</div>
                 <div className="task-meta muted">
