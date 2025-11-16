@@ -4,8 +4,9 @@ import {
   ArrowPathIcon,
   ShareIcon,
   HeartIcon,
+  PlayIcon,
 } from "@heroicons/react/24/outline";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import {
   FAMILY_ACTIVITIES,
   type FamilyActivity,
@@ -29,6 +30,9 @@ export default function FamilyActivitiesPage({ onLogout }: Props) {
   });
   const [filterCategory, setFilterCategory] = useState<string>("Alle");
   const [filterSeason, setFilterSeason] = useState<string>("Alle");
+  const [isSpinning, setIsSpinning] = useState(false);
+  const [spinningActivities, setSpinningActivities] = useState<FamilyActivity[]>([]);
+  const spinIntervalRef = useRef<number>();
 
   const categories = [
     "Alle",
@@ -54,10 +58,49 @@ export default function FamilyActivitiesPage({ onLogout }: Props) {
   }, [filterCategory, filterSeason]);
 
   const generateRandomActivity = () => {
-    if (filteredActivities.length === 0) return;
-    const randomIndex = Math.floor(Math.random() * filteredActivities.length);
-    setCurrentActivity(filteredActivities[randomIndex]);
+    if (filteredActivities.length === 0 || isSpinning) return;
+    
+    setIsSpinning(true);
+    setCurrentActivity(null);
+    
+    // Spielautomat-Animation: 50 schnelle Wechsel über 3 Sekunden
+    let spinCount = 0;
+    const maxSpins = 50;
+    const spinDuration = 3000; // 3 Sekunden
+    const spinInterval = spinDuration / maxSpins;
+    
+    spinIntervalRef.current = window.setInterval(() => {
+      const randomIndex = Math.floor(Math.random() * filteredActivities.length);
+      const activity = filteredActivities[randomIndex];
+      setSpinningActivities([activity]);
+      
+      spinCount++;
+      
+      if (spinCount >= maxSpins) {
+        clearInterval(spinIntervalRef.current);
+        setIsSpinning(false);
+        setCurrentActivity(activity);
+        setSpinningActivities([]);
+        
+        // Sound-Effekt (wenn möglich)
+        try {
+          const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmUgCkC96Oy7ZRUJUaXh6K1YERFKouKvaxkKVKPj6bFaEg9CmN2jeSYXMYDL8t2SRQsTWL/v4n0pBim3yOLeyuLONQgzqNPm5YhOBgm/1vHH9+CziaGXpZ2Rn2kOCWi57eOuVhYJUqXi6bFaEg9CmN2keSYWMYDM8tyQRAsQW77n4H8pBig');
+          audio.play().catch(() => {}); // Ignoriere Fehler wenn Sound nicht funktioniert
+        } catch (e) {
+          // Ignoriere Fehler
+        }
+      }
+    }, spinInterval);
   };
+  
+  // Cleanup bei Component Unmount
+  useEffect(() => {
+    return () => {
+      if (spinIntervalRef.current) {
+        clearInterval(spinIntervalRef.current);
+      }
+    };
+  }, []);
 
   const toggleFavorite = (activityId: string) => {
     const newFavorites = favorites.includes(activityId)
@@ -171,38 +214,177 @@ export default function FamilyActivitiesPage({ onLogout }: Props) {
             </div>
           </div>
 
-          {/* Generator Button */}
-          <button
-            onClick={generateRandomActivity}
-            className="card-action-btn"
+          {/* Spielautomat Generator */}
+          <div
             style={{
-              fontSize: "1.1rem",
-              padding: "0.75rem 2rem",
               background: "linear-gradient(135deg, #ff6b6b, #ff8e53)",
-              fontWeight: "bold",
-              marginBottom: "1.5rem",
+              borderRadius: "15px",
+              padding: "2rem",
+              marginBottom: "2rem",
+              border: "3px solid rgba(255,255,255,0.2)",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
             }}
           >
-            <ArrowPathIcon
+            <div
               style={{
-                width: 20,
-                height: 20,
-                verticalAlign: "text-bottom",
-                marginRight: 8,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: "1.5rem",
+                gap: "1rem",
               }}
-            />
-            Neue Aktivität vorschlagen! ({filteredActivities.length} verfügbar)
-          </button>
+            >
+              <SparklesIcon style={{ width: 32, height: 32, color: "#fff" }} />
+              <h2 style={{ margin: 0, color: "#fff", fontSize: "1.5rem" }}>
+                🎰 FAMILIEN-AKTIVITÄTS-SPIELAUTOMAT 🎰
+              </h2>
+              <SparklesIcon style={{ width: 32, height: 32, color: "#fff" }} />
+            </div>
+            
+            {/* Spielautomat-Display */}
+            <div
+              style={{
+                background: "#000",
+                borderRadius: "10px",
+                padding: "1.5rem",
+                marginBottom: "1.5rem",
+                border: "3px solid #333",
+                minHeight: "120px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                position: "relative",
+                overflow: "hidden",
+              }}
+            >
+              {isSpinning ? (
+                <div
+                  style={{
+                    color: "#00ff00",
+                    fontSize: "1.2rem",
+                    fontFamily: "monospace",
+                    textAlign: "center",
+                    animation: "blink 0.5s infinite",
+                  }}
+                >
+                  {spinningActivities.length > 0 ? (
+                    <div
+                      style={{
+                        transform: "scale(1.1)",
+                        transition: "transform 0.1s",
+                      }}
+                    >
+                      🎲 {spinningActivities[0].title}
+                      <br />
+                      <span style={{ fontSize: "0.9rem", opacity: 0.8 }}>
+                        {spinningActivities[0].category} • {spinningActivities[0].duration}
+                      </span>
+                    </div>
+                  ) : (
+                    "🎰 SPINNING... 🎰"
+                  )}
+                </div>
+              ) : currentActivity ? (
+                <div style={{ color: "#00ff00", textAlign: "center" }}>
+                  <div style={{ fontSize: "1.3rem", marginBottom: "0.5rem" }}>
+                    🏆 {currentActivity.title}
+                  </div>
+                  <div style={{ fontSize: "0.9rem", opacity: 0.8 }}>
+                    {currentActivity.category} • {currentActivity.duration}
+                  </div>
+                </div>
+              ) : (
+                <div
+                  style={{
+                    color: "#666",
+                    fontSize: "1.1rem",
+                    textAlign: "center",
+                  }}
+                >
+                  ★ Bereit für eine neue Aktivität? ★
+                  <br />
+                  <span style={{ fontSize: "0.9rem" }}>
+                    Drücke den Knopf und lass dich überraschen!
+                  </span>
+                </div>
+              )}
+            </div>
 
-          {/* Current Activity Display */}
+            {/* Spielautomat-Hebel/Button */}
+            <button
+              onClick={generateRandomActivity}
+              disabled={isSpinning || filteredActivities.length === 0}
+              style={{
+                fontSize: "1.2rem",
+                padding: "1rem 3rem",
+                background: isSpinning 
+                  ? "linear-gradient(135deg, #666, #888)"
+                  : "linear-gradient(135deg, #ffd700, #ffed4a)",
+                color: "#000",
+                fontWeight: "bold",
+                border: "3px solid rgba(0,0,0,0.2)",
+                borderRadius: "50px",
+                cursor: isSpinning ? "not-allowed" : "pointer",
+                transform: isSpinning ? "scale(0.95)" : "scale(1)",
+                transition: "all 0.2s",
+                boxShadow: isSpinning 
+                  ? "inset 0 4px 8px rgba(0,0,0,0.3)" 
+                  : "0 4px 15px rgba(255,215,0,0.5)",
+                display: "block",
+                margin: "0 auto",
+              }}
+            >
+              {isSpinning ? (
+                <>
+                  <ArrowPathIcon
+                    style={{
+                      width: 24,
+                      height: 24,
+                      verticalAlign: "text-bottom",
+                      marginRight: 10,
+                      animation: "spin 0.5s linear infinite",
+                    }}
+                  />
+                  SPINNING...
+                </>
+              ) : (
+                <>
+                  <PlayIcon
+                    style={{
+                      width: 24,
+                      height: 24,
+                      verticalAlign: "text-bottom",
+                      marginRight: 10,
+                    }}
+                  />
+                  AKTIVITÄT GENERIEREN!
+                </>
+              )}
+            </button>
+            
+            <div
+              style={{
+                textAlign: "center",
+                marginTop: "1rem",
+                color: "rgba(255,255,255,0.8)",
+                fontSize: "0.9rem",
+              }}
+            >
+              💫 {filteredActivities.length} Aktivitäten verfügbar 💫
+            </div>
+          </div>
+
+          {/* Current Activity Display - Erweitert */}
           {currentActivity && (
             <div
               style={{
-                padding: "1.5rem",
-                background: "rgba(255,255,255,0.08)",
-                borderRadius: "12px",
-                border: "2px solid rgba(255,255,255,0.2)",
-                marginBottom: "1rem",
+                padding: "2rem",
+                background: "linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05))",
+                borderRadius: "15px",
+                border: "2px solid rgba(255, 215, 0, 0.3)",
+                marginBottom: "2rem",
+                boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
+                animation: "glow 2s ease-in-out infinite alternate",
               }}
             >
               <div
@@ -217,11 +399,13 @@ export default function FamilyActivitiesPage({ onLogout }: Props) {
                   <h4
                     style={{
                       margin: "0 0 0.5rem 0",
-                      fontSize: "1.3rem",
-                      color: "#fff",
+                      fontSize: "1.5rem",
+                      color: "#ffd700",
+                      textShadow: "0 2px 4px rgba(0,0,0,0.5)",
+                      fontWeight: "bold",
                     }}
                   >
-                    {currentActivity.title}
+                    🎉 {currentActivity.title} 🎉
                   </h4>
                   <div
                     style={{
@@ -294,15 +478,69 @@ export default function FamilyActivitiesPage({ onLogout }: Props) {
                 </div>
               </div>
 
-              <p style={{ margin: "0 0 1rem 0", lineHeight: "1.5" }}>
+              <p style={{ 
+                margin: "0 0 1.5rem 0", 
+                lineHeight: "1.6", 
+                fontSize: "1.1rem",
+                background: "rgba(0,0,0,0.3)",
+                padding: "1rem",
+                borderRadius: "8px",
+                borderLeft: "4px solid #ffd700"
+              }}>
                 {currentActivity.description}
               </p>
 
               {currentActivity.materials && (
-                <div style={{ marginBottom: "1rem" }}>
-                  <strong>Material:</strong> {currentActivity.materials}
+                <div style={{ 
+                  marginBottom: "1.5rem",
+                  padding: "1rem",
+                  background: "rgba(107, 231, 107, 0.1)",
+                  borderRadius: "8px",
+                  border: "1px solid rgba(107, 231, 107, 0.3)"
+                }}>
+                  <strong style={{ color: "#6be76b" }}>🛠️ Material benötigt:</strong>
+                  <br />
+                  <span style={{ fontSize: "1.05rem" }}>{currentActivity.materials}</span>
                 </div>
               )}
+              
+              {/* Zusätzliche Details */}
+              <div style={{ 
+                display: "grid", 
+                gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                gap: "1rem",
+                marginBottom: "1.5rem"
+              }}>
+                <div style={{ 
+                  padding: "0.75rem",
+                  background: "rgba(255, 107, 107, 0.1)",
+                  borderRadius: "6px",
+                  textAlign: "center"
+                }}>
+                  <div style={{ fontSize: "0.85rem", opacity: 0.8 }}>⏰ Dauer</div>
+                  <div style={{ fontWeight: "bold", color: "#ff6b6b" }}>{currentActivity.duration}</div>
+                </div>
+                <div style={{ 
+                  padding: "0.75rem",
+                  background: "rgba(107, 170, 255, 0.1)",
+                  borderRadius: "6px",
+                  textAlign: "center"
+                }}>
+                  <div style={{ fontSize: "0.85rem", opacity: 0.8 }}>👶 Altersgruppe</div>
+                  <div style={{ fontWeight: "bold", color: "#6baaff" }}>{currentActivity.ageGroup}</div>
+                </div>
+                {currentActivity.season && (
+                  <div style={{ 
+                    padding: "0.75rem",
+                    background: "rgba(255, 193, 7, 0.1)",
+                    borderRadius: "6px",
+                    textAlign: "center"
+                  }}>
+                    <div style={{ fontSize: "0.85rem", opacity: 0.8 }}>🌍 Saison</div>
+                    <div style={{ fontWeight: "bold", color: "#ffc107" }}>{currentActivity.season}</div>
+                  </div>
+                )}
+              </div>
 
               {currentActivity.link && (
                 <a
