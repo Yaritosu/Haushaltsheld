@@ -11,6 +11,7 @@ import {
   FAMILY_ACTIVITIES,
   type FamilyActivity,
 } from "../data/familyActivities";
+import { useActivityLog } from "../context/ActivityLogContext";
 
 type Props = { onLogout: () => void };
 
@@ -33,6 +34,19 @@ export default function FamilyActivitiesPage({ onLogout }: Props) {
   const [isSpinning, setIsSpinning] = useState(false);
   const [spinningActivities, setSpinningActivities] = useState<FamilyActivity[]>([]);
   const spinIntervalRef = useRef<number>();
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [selectedActivityForLog, setSelectedActivityForLog] = useState<FamilyActivity | null>(null);
+  const [rating, setRating] = useState(5);
+  const [notes, setNotes] = useState("");
+  const [duration, setDuration] = useState("");
+
+  const { 
+    addLogEntry, 
+    getRecentActivities, 
+    hasCompletedActivity, 
+    getCompletionCount,
+    getActivitiesCount 
+  } = useActivityLog();
 
   const categories = [
     "Alle",
@@ -130,6 +144,27 @@ export default function FamilyActivitiesPage({ onLogout }: Props) {
       alert("Aktivität in Zwischenablage kopiert!");
     }
   };
+
+  const markAsCompleted = (activity: FamilyActivity) => {
+    setSelectedActivityForLog(activity);
+    setShowCompletionModal(true);
+    setRating(5);
+    setNotes("");
+    setDuration("");
+  };
+
+  const saveActivityLog = () => {
+    if (!selectedActivityForLog) return;
+    
+    const durationNum = duration ? parseInt(duration) : undefined;
+    addLogEntry(selectedActivityForLog, rating, notes, durationNum);
+    
+    setShowCompletionModal(false);
+    setSelectedActivityForLog(null);
+    alert(`🎉 "${selectedActivityForLog.title}" wurde zu deinem Activity-Log hinzugefügt!`);
+  };
+
+  const recentActivities = getRecentActivities(5);
 
   return (
     <AppShell onLogout={onLogout}>
@@ -475,6 +510,19 @@ export default function FamilyActivitiesPage({ onLogout }: Props) {
                   >
                     <ShareIcon style={{ width: 18, height: 18 }} />
                   </button>
+                  <button
+                    onClick={() => markAsCompleted(currentActivity)}
+                    style={{
+                      background: "rgba(107, 231, 107, 0.3)",
+                      border: "1px solid rgba(107, 231, 107, 0.5)",
+                      borderRadius: "6px",
+                      padding: "0.5rem",
+                      cursor: "pointer",
+                      color: "#6be76b",
+                    }}
+                  >
+                    ✓
+                  </button>
                 </div>
               </div>
 
@@ -635,7 +683,203 @@ export default function FamilyActivitiesPage({ onLogout }: Props) {
             </div>
           </div>
         )}
+
+        {/* Activity-Log Card */}
+        <div
+          className="dashboard-card"
+          style={{
+            gridColumn: "1 / -1",
+            maxWidth: "900px",
+            margin: "0 auto",
+          }}
+        >
+          <div className="card-icon">
+            <SparklesIcon style={{ width: 28, height: 28 }} />
+          </div>
+          <h3>📊 Activity-Log ({getActivitiesCount()} Aktivitäten abgeschlossen)</h3>
+          <p className="muted">Deine letzten Familienaktivitäten</p>
+          
+          {recentActivities.length > 0 ? (
+            <div style={{ marginTop: "1rem" }}>
+              {recentActivities.map((entry) => (
+                <div
+                  key={entry.id}
+                  className="task-item"
+                  style={{ 
+                    marginBottom: "0.75rem",
+                    background: hasCompletedActivity(entry.activityId) ? "rgba(107, 231, 107, 0.1)" : undefined
+                  }}
+                >
+                  <div style={{ flex: 1 }}>
+                    <div className="task-title">
+                      {entry.activityTitle}
+                      {getCompletionCount(entry.activityId) > 1 && (
+                        <span style={{ 
+                          fontSize: "0.8rem", 
+                          opacity: 0.7,
+                          marginLeft: "0.5rem"
+                        }}>
+                          ({getCompletionCount(entry.activityId)}x gemacht)
+                        </span>
+                      )}
+                    </div>
+                    <div className="task-meta muted">
+                      {new Date(entry.completedAt).toLocaleDateString("de-DE")} 
+                      {entry.rating && (
+                        <span style={{ marginLeft: "1rem" }}>
+                          {"⭐".repeat(entry.rating)}
+                        </span>
+                      )}
+                      {entry.duration && (
+                        <span style={{ marginLeft: "1rem" }}>
+                          ⏱️ {entry.duration} Min
+                        </span>
+                      )}
+                    </div>
+                    {entry.notes && (
+                      <div style={{ 
+                        fontSize: "0.9rem", 
+                        fontStyle: "italic",
+                        marginTop: "0.25rem",
+                        opacity: 0.8
+                      }}>
+                        "{entry.notes}"
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div
+              style={{
+                padding: "2rem",
+                textAlign: "center",
+                background: "rgba(255,255,255,0.05)",
+                borderRadius: "8px",
+                marginTop: "1rem",
+              }}
+            >
+              <p className="muted">
+                Noch keine Aktivitäten abgeschlossen. 
+                <br />Probiere eine Aktivität aus und markiere sie als erledigt! 🎯
+              </p>
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* Completion Modal */}
+      {showCompletionModal && selectedActivityForLog && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0,0,0,0.8)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+          }}
+        >
+          <div
+            className="dashboard-card"
+            style={{
+              maxWidth: "500px",
+              margin: "2rem",
+              maxHeight: "80vh",
+              overflow: "auto",
+            }}
+          >
+            <h3>🎉 Aktivität abgeschlossen!</h3>
+            <p><strong>{selectedActivityForLog.title}</strong></p>
+
+            <div style={{ marginBottom: "1rem" }}>
+              <label style={{ display: "block", marginBottom: "0.5rem" }}>
+                Bewertung:
+              </label>
+              <div style={{ display: "flex", gap: "0.5rem" }}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    onClick={() => setRating(star)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      fontSize: "1.5rem",
+                      cursor: "pointer",
+                      color: star <= rating ? "#ffd700" : "#666",
+                    }}
+                  >
+                    ⭐
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: "1rem" }}>
+              <label style={{ display: "block", marginBottom: "0.5rem" }}>
+                Tatsächliche Dauer (Minuten):
+              </label>
+              <input
+                type="number"
+                value={duration}
+                onChange={(e) => setDuration(e.target.value)}
+                placeholder="z.B. 45"
+                style={{
+                  width: "100%",
+                  padding: "0.5rem",
+                  borderRadius: "6px",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  background: "rgba(255,255,255,0.1)",
+                  color: "#fff",
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: "1.5rem" }}>
+              <label style={{ display: "block", marginBottom: "0.5rem" }}>
+                Notizen (optional):
+              </label>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Wie war die Aktivität? Was könnte man beim nächsten Mal besser machen?"
+                rows={3}
+                style={{
+                  width: "100%",
+                  padding: "0.5rem",
+                  borderRadius: "6px",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  background: "rgba(255,255,255,0.1)",
+                  color: "#fff",
+                  resize: "vertical",
+                }}
+              />
+            </div>
+
+            <div style={{ display: "flex", gap: "1rem" }}>
+              <button
+                onClick={saveActivityLog}
+                className="card-action-btn"
+                style={{ flex: 1 }}
+              >
+                Speichern
+              </button>
+              <button
+                onClick={() => setShowCompletionModal(false)}
+                className="card-action-btn secondary"
+                style={{ flex: 1 }}
+              >
+                Abbrechen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 }

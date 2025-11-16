@@ -18,6 +18,7 @@ import CalendarPage from "./pages/CalendarPage";
 import RecipesPage from "./pages/RecipesPage";
 import AchievementsPage from "./pages/AchievementsPage";
 import { AchievementsProvider } from "./context/AchievementsContext";
+import { ActivityLogProvider } from "./context/ActivityLogContext";
 import { AchievementStatsPage } from "./pages/AchievementStatsPage";
 import InvitePage from "./pages/InvitePage";
 import FamilyActivitiesPage from "./pages/FamilyActivitiesPage";
@@ -85,7 +86,8 @@ export default function App() {
       <TasksProvider>
         <WishlistProvider>
           <AchievementsProvider>
-            <Routes>
+            <ActivityLogProvider>
+              <Routes>
               <Route
                 path="/"
                 element={
@@ -239,7 +241,8 @@ export default function App() {
               />
               <Route path="/invite/:code" element={<InvitePage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
+              </Routes>
+            </ActivityLogProvider>
           </AchievementsProvider>
         </WishlistProvider>
       </TasksProvider>

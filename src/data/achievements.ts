@@ -24,9 +24,9 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: "tasks_1",
     title: "Erste Schritte",
-    description: "1 Aufgabe erledigt",
+    description: "5 Aufgaben erledigt",
     icon: "CheckCircleIcon",
-    requirement: { type: "tasks_completed", target: 1 },
+    requirement: { type: "tasks_completed", target: 5 },
   },
   {
     id: "tasks_5",
@@ -623,5 +623,142 @@ export const ACHIEVEMENTS: Achievement[] = [
     description: "Top 3 im Jahres-Ranking",
     icon: "StarIcon",
     requirement: { type: "special", target: 3 },
+  },
+
+  // === 17 NEUE ACHIEVEMENTS FÜR ERWEITERTE HERAUSFORDERUNGEN ===
+
+  // Familienaktivitäten Achievements
+  {
+    id: "activities_1",
+    title: "Aktivitäts-Starter",
+    description: "3 verschiedene Familienaktivitäten ausprobiert",
+    icon: "SparklesIcon",
+    requirement: { type: "special", target: 3 },
+  },
+  {
+    id: "activities_2", 
+    title: "Aktivitäts-Explorer",
+    description: "10 verschiedene Familienaktivitäten ausprobiert",
+    icon: "MapIcon",
+    requirement: { type: "special", target: 10 },
+  },
+  {
+    id: "activities_3",
+    title: "Aktivitäts-Meister",
+    description: "25 verschiedene Familienaktivitäten ausprobiert", 
+    icon: "TrophyIcon",
+    requirement: { type: "special", target: 25 },
+  },
+  {
+    id: "activities_4",
+    title: "Kategorie-Sammler",
+    description: "Aktivitäten aus allen 8 Kategorien ausprobiert",
+    icon: "ViewColumnsIcon",
+    requirement: { type: "special", target: 8 },
+  },
+
+  // Erweiterte Task Achievements
+  {
+    id: "tasks_mega_1",
+    title: "Jahrhundert-Aufgabe",
+    description: "100 Aufgaben an einem Tag erledigt",
+    icon: "BoltIcon",
+    requirement: { type: "special", target: 100 },
+  },
+  {
+    id: "tasks_mega_2", 
+    title: "Aufgaben-Titan",
+    description: "1000 Aufgaben insgesamt erledigt",
+    icon: "CommandLineIcon",
+    requirement: { type: "tasks_completed", target: 1000 },
+  },
+
+  // Soziale Achievements
+  {
+    id: "social_1",
+    title: "Teamplayer", 
+    description: "50 Punkte an Familienmitglieder verschenkt",
+    icon: "GiftIcon",
+    requirement: { type: "points_transferred", target: 50 },
+  },
+  {
+    id: "social_2",
+    title: "Großzügiger Helfer",
+    description: "200 Punkte an Familienmitglieder verschenkt", 
+    icon: "HeartIcon",
+    requirement: { type: "points_transferred", target: 200 },
+  },
+
+  // Langzeit-Achievements
+  {
+    id: "longterm_1",
+    title: "Treuer Nutzer",
+    description: "30 Tage in Folge eingeloggt",
+    icon: "CalendarDaysIcon",
+    requirement: { type: "login_streak", target: 30 },
+  },
+  {
+    id: "longterm_2",
+    title: "Jahres-Champion", 
+    description: "365 Tage in Folge eingeloggt",
+    icon: "TrophyIcon",
+    requirement: { type: "login_streak", target: 365 },
+  },
+
+  // Spezial-Achievements
+  {
+    id: "special_1",
+    title: "Perfektionist",
+    description: "7 Tage hintereinander alle Aufgaben erledigt",
+    icon: "CheckBadgeIcon", 
+    requirement: { type: "special", target: 7 },
+  },
+  {
+    id: "special_2",
+    title: "Punkte-Millionär",
+    description: "10.000 Punkte gesammelt", 
+    icon: "BanknotesIcon",
+    requirement: { type: "points_earned", target: 10000 },
+  },
+  {
+    id: "special_3",
+    title: "Wunsch-Erfüller",
+    description: "20 Wünsche eingelöst",
+    icon: "StarIcon",
+    requirement: { type: "wishes_redeemed", target: 20 },
+  },
+
+  // Kreativitäts-Achievements
+  {
+    id: "creative_1", 
+    title: "Kreativ-Genius",
+    description: "15 kreative Aktivitäten ausprobiert",
+    icon: "PaintBrushIcon",
+    requirement: { type: "special", target: 15 },
+  },
+  {
+    id: "creative_2",
+    title: "Outdoor-Abenteurer", 
+    description: "20 Outdoor-Aktivitäten gemeistert",
+    icon: "SunIcon",
+    requirement: { type: "special", target: 20 },
+  },
+
+  // Konsistenz-Achievement
+  {
+    id: "consistency_1",
+    title: "Unaufhaltsam",
+    description: "100 Tage Aufgaben-Streak",
+    icon: "FireIcon", 
+    requirement: { type: "task_streak", target: 100 },
+  },
+
+  // Meta-Achievement
+  {
+    id: "meta_1",
+    title: "Achievement-Jäger",
+    description: "50 Achievements freigeschaltet",
+    icon: "ShieldCheckIcon",
+    requirement: { type: "special", target: 50 },
   },
 ];

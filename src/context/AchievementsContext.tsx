@@ -489,7 +489,36 @@ export function AchievementsProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Toast queue for staggered notifications
+  let toastQueue: { title: string; description: string; bonusPoints: number }[] = [];
+  let isProcessingQueue = false;
+
+  const processToastQueue = () => {
+    if (isProcessingQueue || toastQueue.length === 0) return;
+    
+    isProcessingQueue = true;
+    const { title, description, bonusPoints } = toastQueue.shift()!;
+    
+    showSingleToast(title, description, bonusPoints);
+    
+    // Process next toast after 3.5 seconds (toast duration + small gap)
+    setTimeout(() => {
+      isProcessingQueue = false;
+      processToastQueue();
+    }, 3500);
+  };
+
   const showAchievementToast = (
+    title: string,
+    description: string,
+    bonusPoints: number
+  ) => {
+    // Add to queue instead of showing immediately
+    toastQueue.push({ title, description, bonusPoints });
+    processToastQueue();
+  };
+
+  const showSingleToast = (
     title: string,
     description: string,
     bonusPoints: number
