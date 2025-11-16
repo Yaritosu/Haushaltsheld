@@ -387,16 +387,18 @@ export default function Dashboard({ onLogout }: Props) {
                   </div>
                   <button
                     onClick={() => toggleDone(t.id)}
-                    disabled={!due}
+                    disabled={false}
                     style={{
                       background: done
                         ? "rgba(107, 231, 107, 0.3)"
-                        : "rgba(255,255,255,0.15)",
+                        : due
+                        ? "rgba(255,255,255,0.15)"
+                        : "rgba(255, 165, 0, 0.15)",
                       border: "1px solid rgba(255,255,255,0.2)",
                       borderRadius: "6px",
                       padding: "0.5rem",
-                      cursor: due ? "pointer" : "not-allowed",
-                      opacity: due ? 1 : 0.4,
+                      cursor: "pointer",
+                      opacity: due ? 1 : 0.7,
                       transition: "all 0.2s ease",
                       display: "flex",
                       alignItems: "center",

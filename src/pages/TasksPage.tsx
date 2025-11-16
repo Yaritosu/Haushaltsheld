@@ -308,18 +308,22 @@ export default function TasksPage({ onLogout }: Props) {
                           <button
                             className="task-check-btn"
                             onClick={() => toggleDone(t.id)}
-                            disabled={!due}
+                            disabled={false}
                             title={
                               done
                                 ? "Als unerledigt markieren"
-                                : "Als erledigt markieren"
+                                : due 
+                                ? "Als erledigt markieren"
+                                : "Als erledigt markieren (nicht fällig)"
                             }
                             style={{
                               background: done
                                 ? "rgba(107, 231, 107, 0.3)"
-                                : "rgba(255,255,255,0.15)",
-                              opacity: due ? 1 : 0.4,
-                              cursor: due ? "pointer" : "not-allowed",
+                                : due
+                                ? "rgba(255,255,255,0.15)"
+                                : "rgba(255, 165, 0, 0.15)",
+                              opacity: due ? 1 : 0.7,
+                              cursor: "pointer",
                             }}
                           >
                             <CheckIcon style={{ width: 16, height: 16 }} />
